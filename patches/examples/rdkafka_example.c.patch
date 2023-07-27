@@ -1,0 +1,14 @@
+diff --git a/examples/rdkafka_example.c b/examples/rdkafka_example.c
+index 91415318..b1f1d6d3 100644
+--- a/examples/rdkafka_example.c
++++ b/examples/rdkafka_example.c
+@@ -40,7 +40,9 @@
+ #include <syslog.h>
+ #include <time.h>
+ #include <sys/time.h>
++#ifndef _ZOS
+ #include <getopt.h>
++#endif
+ 
+ /* Typical include path would be <librdkafka/rdkafka.h>, but this program
+  * is builtin from within the librdkafka source tree and thus differs. */

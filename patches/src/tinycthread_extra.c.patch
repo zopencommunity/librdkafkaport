@@ -1,0 +1,13 @@
+diff --git a/src/tinycthread_extra.c b/src/tinycthread_extra.c
+index 58049448..e0a10350 100644
+--- a/src/tinycthread_extra.c
++++ b/src/tinycthread_extra.c
+@@ -53,6 +53,8 @@ int thrd_setname(const char *name) {
+ int thrd_is_current(thrd_t thr) {
+ #if defined(_TTHREAD_WIN32_)
+         return GetThreadId(thr) == GetCurrentThreadId();
++#elif defined (_ZOS)
++        return pthread_equal(pthread_self(), thr);
+ #else
+         return (pthread_self() == thr);
+ #endif

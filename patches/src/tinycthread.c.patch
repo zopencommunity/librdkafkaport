@@ -1,0 +1,51 @@
+diff --git a/src/tinycthread.c b/src/tinycthread.c
+index b0ec8e95..f9717c3a 100644
+--- a/src/tinycthread.c
++++ b/src/tinycthread.c
+@@ -217,7 +217,11 @@ int mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
+       dur.tv_nsec = 5000000;
+     }
+ 
++#ifdef _ZOS
++    usleep(dur.tv_sec * 1000000);
++#else
+     nanosleep(&dur, NULL);
++#endif
+   }
+ 
+   switch (rc) {
+@@ -608,13 +612,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+           if((err = pthread_create(thr, NULL, _thrd_wrapper_function,
+                                    (void *)ti)) != 0) {
+                   errno = err;
++#ifdef _ZOS
++                  thr->__ = 0;
++#else
+                   *thr = 0;
++#endif
+           }
+   }
+ #endif
+ 
+   /* Did we fail to create the thread? */
++#ifdef _ZOS
++  if(!(thr->__))
++#else
+   if(!*thr)
++#endif
+   {
+     rd_free(ti);
+     return thrd_error;
+@@ -704,7 +716,11 @@ int thrd_join(thrd_t thr, int *res)
+ int thrd_sleep(const struct timespec *duration, struct timespec *remaining)
+ {
+ #if !defined(_TTHREAD_WIN32_)
+-  return nanosleep(duration, remaining);
++#ifdef _ZOS
++    return usleep(duration->tv_sec * 1000000);
++#else
++    return nanosleep(duration, remaining);
++#endif
+ #else
+   struct timespec start;
+   DWORD t;

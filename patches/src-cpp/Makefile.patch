@@ -1,0 +1,13 @@
+diff --git a/src-cpp/Makefile b/src-cpp/Makefile
+index 78ecb31f..dd267d40 100644
+--- a/src-cpp/Makefile
++++ b/src-cpp/Makefile
+@@ -37,7 +37,7 @@ endif
+ 
+ # Ignore previously defined library dependencies for the C library,
+ # we'll get those dependencies through the C library linkage.
+-LIBS := -L../src -lrdkafka
++LIBS += -L../src -lrdkafka 
+ MKL_PKGCONFIG_REQUIRES_PRIVATE := rdkafka
+ MKL_PKGCONFIG_REQUIRES := rdkafka
+ 

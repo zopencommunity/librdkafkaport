@@ -1,0 +1,14 @@
+diff --git a/src/rdendian.h b/src/rdendian.h
+index 613d44bf..b2d6260a 100644
+--- a/src/rdendian.h
++++ b/src/rdendian.h
+@@ -120,7 +120,8 @@
+ #define le32toh(x) (x)
+ #define le64toh(x) (x)
+ 
+-#elif defined _AIX /* AIX is always big endian */
++#elif defined _AIX || defined _ZOS
++#include <sys/endian.h>
+ #define be64toh(x) (x)
+ #define be32toh(x) (x)
+ #define be16toh(x) (x)

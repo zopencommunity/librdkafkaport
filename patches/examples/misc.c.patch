@@ -1,0 +1,13 @@
+diff --git a/examples/misc.c b/examples/misc.c
+index b63ab577..a0c8488c 100644
+--- a/examples/misc.c
++++ b/examples/misc.c
+@@ -38,6 +38,8 @@
+ 
+ #ifdef _WIN32
+ #include "../win32/wingetopt.h"
++#elif _ZOS
++#include <unistd.h>
+ #else
+ #include <getopt.h>
+ #endif

@@ -1,0 +1,13 @@
+diff --git a/src/rdkafka_ssl.c b/src/rdkafka_ssl.c
+index f9c9aee4..b2aad5b5 100644
+--- a/src/rdkafka_ssl.c
++++ b/src/rdkafka_ssl.c
+@@ -1771,6 +1771,8 @@ static RD_UNUSED unsigned long rd_kafka_transport_ssl_threadid_cb(void) {
+          * and thread id, which means we can't use the
+          * thrd_current() API that returns the handle. */
+         return (unsigned long)GetCurrentThreadId();
++#elif _ZOS
++        return (unsigned long)(intptr_t)thrd_current().__;
+ #else
+         return (unsigned long)(intptr_t)thrd_current();
+ #endif

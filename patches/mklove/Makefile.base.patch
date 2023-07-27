@@ -1,0 +1,22 @@
+diff --git a/mklove/Makefile.base b/mklove/Makefile.base
+index 91be4391..06437db7 100755
+--- a/mklove/Makefile.base
++++ b/mklove/Makefile.base
+@@ -48,7 +48,7 @@ ifneq ($(DESTDIR),)
+ DESTDIR:=$(abspath $(DESTDIR))
+ endif
+ 
+-INSTALL?=		install
++INSTALL=		install
+ INSTALL_PROGRAM?=	$(INSTALL)
+ INSTALL_DATA?=		$(INSTALL) -m 644
+ 
+@@ -265,7 +265,7 @@ copyright-check:
+ 
+ 
+ lib-install:
+-	@printf "$(MKL_YELLOW)Install $(LIBNAME) to $$DESTDIR$(prefix)$(MKL_CLR_RESET)\n"
++	@printf "$(MKL_YELLOW)Install $(LIBNAME) to $$DESTDIR$(prefix)$(MKL_CLR_RESET) -- $(INSTALL)\n"
+ 	$(INSTALL) -d $$DESTDIR$(includedir)/$(PKGNAME)
+ 	$(INSTALL) -d $$DESTDIR$(libdir)
+ 	$(INSTALL) $(HDRS) $$DESTDIR$(includedir)/$(PKGNAME)

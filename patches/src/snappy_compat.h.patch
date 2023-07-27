@@ -1,0 +1,13 @@
+diff --git a/src/snappy_compat.h b/src/snappy_compat.h
+index 3286f63d..33dd27ee 100644
+--- a/src/snappy_compat.h
++++ b/src/snappy_compat.h
+@@ -48,6 +48,8 @@
+ #  error "Endianness is undefined"
+ #endif
+ 
++#elif defined(_ZOS)
++#include <sys/endian.h>
+ 
+ #elif !defined(__WIN32__) && !defined(_MSC_VER) && !defined(__sun) && !defined(_AIX)
+ #  include <endian.h>

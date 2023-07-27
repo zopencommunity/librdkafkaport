@@ -1,0 +1,13 @@
+diff --git a/examples/user_scram.c b/examples/user_scram.c
+index 95d6809b..b635e27e 100644
+--- a/examples/user_scram.c
++++ b/examples/user_scram.c
+@@ -40,6 +40,8 @@
+ 
+ #ifdef _WIN32
+ #include "../win32/wingetopt.h"
++#elif _ZOS
++#include <unistd.h>
+ #else
+ #include <getopt.h>
+ #endif

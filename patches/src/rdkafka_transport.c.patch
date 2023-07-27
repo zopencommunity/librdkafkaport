@@ -1,0 +1,52 @@
+diff --git a/src/rdkafka_transport.c b/src/rdkafka_transport.c
+index 2f241a9d..50d4e28e 100644
+--- a/src/rdkafka_transport.c
++++ b/src/rdkafka_transport.c
+@@ -42,11 +42,15 @@
+ 
+ #include <errno.h>
+ 
++#ifdef _ZOS
++#define MSG_DONTWAIT 0
++#endif
+ /* AIX doesn't have MSG_DONTWAIT */
+ #ifndef MSG_DONTWAIT
+ #define MSG_DONTWAIT MSG_NONBLOCK
+ #endif
+ 
++
+ #if WITH_SSL
+ #include "rdkafka_ssl.h"
+ #endif
+@@ -132,7 +136,6 @@ static ssize_t rd_kafka_transport_socket_sendmsg(rd_kafka_transport_t *rktrans,
+         size_t iovlen;
+         ssize_t r;
+         size_t r2;
+-
+         rd_slice_get_iov(slice, msg.msg_iov, &iovlen, IOV_MAX,
+                          /* FIXME: Measure the effects of this */
+                          rktrans->rktrans_sndbuf_size);
+@@ -275,7 +278,11 @@ static ssize_t rd_kafka_transport_socket_recvmsg(rd_kafka_transport_t *rktrans,
+ #endif
+         r = recvmsg(rktrans->rktrans_s, &msg, MSG_DONTWAIT);
+         if (unlikely(r <= 0)) {
++#ifdef _ZOS
++                if (r == -1 && ((rd_socket_errno == EAGAIN) || (rd_socket_errno == EWOULDBLOCK))) 
++#else
+                 if (r == -1 && rd_socket_errno == EAGAIN)
++#endif
+                         return 0;
+                 else if (r == 0 || (r == -1 && rd_socket_errno == ECONNRESET)) {
+                         /* Receive 0 after POLLIN event means
+@@ -317,10 +324,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
+ #endif
+                              len,
+                          0);
+-
+                 if (unlikely(r == RD_SOCKET_ERROR)) {
+                         if (rd_socket_errno == EAGAIN
+-#ifdef _WIN32
++#ifdef _WIN32 
+                             || rd_socket_errno == WSAEWOULDBLOCK
+ #endif
+                         )

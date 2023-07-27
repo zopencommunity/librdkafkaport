@@ -1,0 +1,22 @@
+diff --git a/src/rdkafka_conf.c b/src/rdkafka_conf.c
+index e5c1415f..36b43572 100644
+--- a/src/rdkafka_conf.c
++++ b/src/rdkafka_conf.c
+@@ -33,6 +33,9 @@
+ #include <stdlib.h>
+ #include <ctype.h>
+ #include <stddef.h>
++#ifdef _ZOS
++#include <strings.h>
++#endif
+ 
+ #include "rdkafka_int.h"
+ #include "rdkafka_feature.h"
+@@ -2213,7 +2216,6 @@ static int rd_kafka_anyconf_set(int scope,
+         char estmp[1];
+         const struct rd_kafka_property *prop;
+         rd_kafka_conf_res_t res;
+-
+         if (!errstr) {
+                 errstr      = estmp;
+                 errstr_size = 0;

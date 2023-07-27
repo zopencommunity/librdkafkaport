@@ -1,0 +1,13 @@
+diff --git a/examples/list_consumer_groups.c b/examples/list_consumer_groups.c
+index 13656cd6..832a46c0 100644
+--- a/examples/list_consumer_groups.c
++++ b/examples/list_consumer_groups.c
+@@ -38,6 +38,8 @@
+ 
+ #ifdef _WIN32
+ #include "../win32/wingetopt.h"
++#elif _ZOS
++#include <unistd.h>
+ #else
+ #include <getopt.h>
+ #endif

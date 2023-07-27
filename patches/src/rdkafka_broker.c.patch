@@ -1,0 +1,24 @@
+diff --git a/src/rdkafka_broker.c b/src/rdkafka_broker.c
+index 481c21d9..765b1690 100644
+--- a/src/rdkafka_broker.c
++++ b/src/rdkafka_broker.c
+@@ -38,7 +38,7 @@
+  * src/rd.h defines _POSIX_SOURCE to be 200809L, which corresponds to XPG7,
+  * which itself is not compatible with _XOPEN_SOURCE on that platform.
+  */
+-#if !defined(_AIX) && !defined(__sun)
++#if !defined(_AIX) && !defined(__sun) && !defined(_ZOS)
+ #define _XOPEN_SOURCE
+ #endif
+ #include <signal.h>
+@@ -49,6 +49,10 @@
+ #include <string.h>
+ #include <ctype.h>
+ 
++#ifdef _ZOS
++#include <strings.h>
++#endif
++
+ #include "rd.h"
+ #include "rdaddr.h"
+ #include "rdkafka_int.h"
