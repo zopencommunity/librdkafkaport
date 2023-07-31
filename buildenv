@@ -1,5 +1,5 @@
 export ZOPEN_GIT_URL="https://github.com/confluentinc/librdkafka.git"
-export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4 libbsd"
+export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
 export ZOPEN_TYPE="GIT"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
