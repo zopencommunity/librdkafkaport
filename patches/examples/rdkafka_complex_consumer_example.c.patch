@@ -1,12 +1,12 @@
 diff --git a/examples/rdkafka_complex_consumer_example.c b/examples/rdkafka_complex_consumer_example.c
-index 1632b303..2885ed12 100644
+index ac56e659..d7f95cb7 100644
 --- a/examples/rdkafka_complex_consumer_example.c
 +++ b/examples/rdkafka_complex_consumer_example.c
 @@ -40,7 +40,9 @@
  #include <syslog.h>
  #include <sys/time.h>
  #include <errno.h>
-+#ifndef _ZOS
++#ifndef __MVS__
  #include <getopt.h>
 +#endif
  

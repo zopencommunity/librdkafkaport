@@ -1,12 +1,12 @@
 diff --git a/src/rdposix.h b/src/rdposix.h
-index 7b237682..c7804e4e 100644
+index 0af59481..68651dde 100644
 --- a/src/rdposix.h
 +++ b/src/rdposix.h
 @@ -60,12 +60,15 @@
  #define RD_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
  #define RD_NORETURN           __attribute__((noreturn))
  #define RD_IS_CONSTANT(p)     __builtin_constant_p((p))
-+#ifdef _ZOS
++#ifdef __MVS__
 +#define RD_TLS  
 +#else
  #define RD_TLS                __thread
@@ -25,7 +25,7 @@ index 7b237682..c7804e4e 100644
   * Misc
   */
 -
-+#ifdef _ZOS
++#ifdef __MVS__
 +#define rd_usleep(usec, terminate) sleep((usec) / 1000)
 +#else
  /**

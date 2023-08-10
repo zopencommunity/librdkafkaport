@@ -1,12 +1,12 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..f9717c3a 100644
+index b0ec8e95..9a8fea06 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
 @@ -217,7 +217,11 @@ int mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
        dur.tv_nsec = 5000000;
      }
  
-+#ifdef _ZOS
++#ifdef __MVS__
 +    usleep(dur.tv_sec * 1000000);
 +#else
      nanosleep(&dur, NULL);
@@ -18,7 +18,7 @@ index b0ec8e95..f9717c3a 100644
            if((err = pthread_create(thr, NULL, _thrd_wrapper_function,
                                     (void *)ti)) != 0) {
                    errno = err;
-+#ifdef _ZOS
++#ifdef __MVS__
 +                  thr->__ = 0;
 +#else
                    *thr = 0;
@@ -28,7 +28,7 @@ index b0ec8e95..f9717c3a 100644
  #endif
  
    /* Did we fail to create the thread? */
-+#ifdef _ZOS
++#ifdef __MVS__
 +  if(!(thr->__))
 +#else
    if(!*thr)
@@ -41,7 +41,7 @@ index b0ec8e95..f9717c3a 100644
  {
  #if !defined(_TTHREAD_WIN32_)
 -  return nanosleep(duration, remaining);
-+#ifdef _ZOS
++#ifdef __MVS__
 +    return usleep(duration->tv_sec * 1000000);
 +#else
 +    return nanosleep(duration, remaining);

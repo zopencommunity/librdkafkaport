@@ -1,12 +1,12 @@
 diff --git a/examples/incremental_alter_configs.c b/examples/incremental_alter_configs.c
-index 40a16cf8..78a21e51 100644
+index 40a16cf8..da3be453 100644
 --- a/examples/incremental_alter_configs.c
 +++ b/examples/incremental_alter_configs.c
 @@ -38,6 +38,8 @@
  
  #ifdef _WIN32
  #include "../win32/wingetopt.h"
-+#elif _ZOS
++#elif __MVS__
 +#include <unistd.h>
  #else
  #include <getopt.h>

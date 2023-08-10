@@ -1,13 +1,13 @@
 diff --git a/src/rdkafka.c b/src/rdkafka.c
-index 2a5e040b..5c23f023 100644
+index a353f7b4..59b413ff 100644
 --- a/src/rdkafka.c
 +++ b/src/rdkafka.c
-@@ -38,7 +38,9 @@
+@@ -39,7 +39,9 @@
  #include <sys/types.h>
  #include <dirent.h>
  #endif
 -
-+#ifdef _ZOS
++#ifdef __MVS__
 +#include <strings.h>
 +#endif
  #include "rdkafka_int.h"
@@ -17,7 +17,7 @@ index 2a5e040b..5c23f023 100644
          /* Trigger any state-change waiters (which should check the
           * terminate flag whenever they wake up). */
          rd_kafka_brokers_broadcast_state_change(rk);
-+#ifdef _ZOS
++#ifdef __MVS__
 +        if (rk->rk_background.thread.__) {
 +#else
  
@@ -26,11 +26,11 @@ index 2a5e040b..5c23f023 100644
                  int res;
                  /* Send op to trigger queue/io wake-up.
                   * The op itself is (likely) ignored by the receiver. */
-@@ -2608,7 +2614,11 @@ fail:
+@@ -2609,7 +2615,11 @@ fail:
          if (rk->rk_conf.sasl.provider)
                  rd_kafka_sasl_term(rk);
  
-+#ifdef _ZOS
++#ifdef __MVS__
 +        if (rk->rk_background.thread.__) {
 +#else
          if (rk->rk_background.thread) {
@@ -38,21 +38,21 @@ index 2a5e040b..5c23f023 100644
                  int res;
                  thrd_join(rk->rk_background.thread, &res);
                  rd_kafka_q_destroy_owner(rk->rk_background.q);
-@@ -4993,7 +5003,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -4995,7 +5005,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
  #else
          DIR *dir;
          struct dirent *d;
 -#if defined(__sun)
-+#if defined(__sun) || defined(_ZOS)
++#if defined(__sun) || defined(__MVS__)
          struct stat st;
          int ret = 0;
  #endif
-@@ -5007,7 +5017,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -5009,7 +5019,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
                  if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
                          continue;
  
 -#if defined(__sun)
-+#if defined(__sun) || defined(_ZOS)
++#if defined(__sun) || defined(__MVS__)
                  ret = stat(d->d_name, &st);
                  if (ret != 0) {
                          return rd_true;  // Can't be accessed

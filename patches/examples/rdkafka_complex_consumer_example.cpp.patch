@@ -1,12 +1,12 @@
 diff --git a/examples/rdkafka_complex_consumer_example.cpp b/examples/rdkafka_complex_consumer_example.cpp
-index b4f158cb..0d1e08f6 100644
+index dc193df8..07219cbd 100644
 --- a/examples/rdkafka_complex_consumer_example.cpp
 +++ b/examples/rdkafka_complex_consumer_example.cpp
 @@ -49,6 +49,8 @@
  #include "../win32/wingetopt.h"
  #elif _AIX
  #include <unistd.h>
-+#elif _ZOS
++#elif __MVS__
 +#include <unistd.h>
  #else
  #include <getopt.h>

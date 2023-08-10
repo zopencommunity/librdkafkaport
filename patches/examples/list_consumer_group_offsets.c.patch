@@ -1,12 +1,12 @@
 diff --git a/examples/list_consumer_group_offsets.c b/examples/list_consumer_group_offsets.c
-index 03e878ee..e5b3e397 100644
+index 03e878ee..8dd1bb92 100644
 --- a/examples/list_consumer_group_offsets.c
 +++ b/examples/list_consumer_group_offsets.c
 @@ -38,6 +38,8 @@
  
  #ifdef _WIN32
  #include "../win32/wingetopt.h"
-+#elif _ZOS
++#elif __MVS__
 +#include <unistd.h>
  #else
  #include <getopt.h>

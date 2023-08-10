@@ -1,21 +1,20 @@
 diff --git a/configure.self b/configure.self
-index bb0a975c..447d6787 100644
+index 3c49956b..f1ad5e04 100644
 --- a/configure.self
 +++ b/configure.self
-@@ -50,11 +50,13 @@ mkl_toggle_option "Feature" ENABLE_SYSLOG "--enable-syslog" "Enable logging to s
- function checks {
+@@ -48,13 +48,14 @@ mkl_toggle_option "Feature" ENABLE_SYSLOG "--enable-syslog" "Enable logging to s
  
+ 
+ function checks {
+-
++if [[ $MKL_DISTRO != "os/390" ]]; then
      # -lrt is needed on linux for clock_gettime: link it if it exists.
--    mkl_lib_check "librt" "" cont CC "-lrt"
-+    # dh commented
-+    #mkl_lib_check "librt" "" cont CC "-lrt"
+     mkl_lib_check "librt" "" cont CC "-lrt"
  
      # pthreads required (even if C11 threads available) for rwlocks.
--    mkl_lib_check "libpthread" "" fail CC "-lpthread" \
--                  "#include <pthread.h>"
-+    # dh commented
-+    #mkl_lib_check "libpthread" "" fail CC "-lpthread" \
-+    #              "#include <pthread.h>"
+     mkl_lib_check "libpthread" "" fail CC "-lpthread" \
+                   "#include <pthread.h>"
++fi
  
      if [[ $ENABLE_C11THREADS != n ]]; then
          case "$ENABLE_C11THREADS" in
