@@ -1,13 +1,13 @@
 LIBRDKAFKA_VERSION="2.2"
 export ZOPEN_GIT_URL="https://github.com/confluentinc/librdkafka.git"
-export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
+export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4 libbsd"
 export ZOPEN_TYPE="GIT"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
 
-export ZOPEN_EXTRA_CFLAGS="-fzos-le-char-mode=ascii -std=gnu11 -mnocsect -fno-short-enums -Wno-error -mzos-target=zosv2r4 -I../src"
+export ZOPEN_EXTRA_CFLAGS="-Wno-error -mzos-target=zosv2r4 -I../src"
 
-export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -D_XOPEN_SOURCE=600 -mzos-target=zosv2r4 -I../src-cpp"
+export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -mzos-target=zosv2r4 -I../src-cpp"
 
 export LIBS="-L/u/ibmuser/zopen/prod/zoslib/lib -L/u/ibmuser/zopen/prod/openssl/lib -L/u/ibmuser/zopen/prod/zstd/lib -L/u/ibmuser/zopen/prod/lz4/lib -L../src -lzoslib -lrdkafka -llz4 -lzstd -lcrypto -lssl -lzoslib-supp"
 
@@ -17,6 +17,7 @@ export ZOPEN_CONFIGURE_MINIMAL=yes
 
 zopen_check_results()
 {
+  #this will be done once we have the test compilation issue resolved
   dir="$1"
   pfx="$2"
   chk="$1/$2_check.log"
@@ -32,11 +33,12 @@ zopen_append_to_env()
 {
 
 cat <<ZZ
-# Set LE character set for compilation to ASCII.
-# Set build target to z/os v2r4 untill the build issue on v2r5 and above is fixed.
-export ZOPEN_EXTRA_CFLAGS="-fzos-le-char-mode=ascii -std=gnu11 -mnocsect -fno-short-enums -Wno-error -mzos-target=zosv2r4 -I../src"
-
-export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -D_XOPEN_SOURCE=600 -mzos-target=zosv2r4 -I../src-cpp"
+if [ ! -z "\$ZOPEN_IN_ZOPEN_BUILD" ]; then 
+export ZOPEN_EXTRA_CFLAGS="\${ZOPEN_EXTRA_CFLAGS} -I\$PWD/include" 
+export ZOPEN_EXTRA_CXXFLAGS="\${ZOPEN_EXTRA_CXXFLAGS} -I\$PWD/include" 
+export ZOPEN_EXTRA_LDFLAGS="\${ZOPEN_EXTRA_LDFLAGS} -L\$PWD/lib" 
+export ZOPEN_EXTRA_LIBS="\${ZOPEN_EXTRA_LIBS} -llibrdkafka"
+fi
 ZZ
 
 }

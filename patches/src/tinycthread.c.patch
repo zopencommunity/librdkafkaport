@@ -1,20 +1,8 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..9a8fea06 100644
+index b0ec8e95..4f351096 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
-@@ -217,7 +217,11 @@ int mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
-       dur.tv_nsec = 5000000;
-     }
- 
-+#ifdef __MVS__
-+    usleep(dur.tv_sec * 1000000);
-+#else
-     nanosleep(&dur, NULL);
-+#endif
-   }
- 
-   switch (rc) {
-@@ -608,13 +612,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+@@ -608,13 +608,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
            if((err = pthread_create(thr, NULL, _thrd_wrapper_function,
                                     (void *)ti)) != 0) {
                    errno = err;
@@ -36,16 +24,3 @@ index b0ec8e95..9a8fea06 100644
    {
      rd_free(ti);
      return thrd_error;
-@@ -704,7 +716,11 @@ int thrd_join(thrd_t thr, int *res)
- int thrd_sleep(const struct timespec *duration, struct timespec *remaining)
- {
- #if !defined(_TTHREAD_WIN32_)
--  return nanosleep(duration, remaining);
-+#ifdef __MVS__
-+    return usleep(duration->tv_sec * 1000000);
-+#else
-+    return nanosleep(duration, remaining);
-+#endif
- #else
-   struct timespec start;
-   DWORD t;

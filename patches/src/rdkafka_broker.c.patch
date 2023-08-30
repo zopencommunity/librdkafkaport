@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_broker.c b/src/rdkafka_broker.c
-index 481c21d9..01bb7b49 100644
+index 481c21d9..c6ef787f 100644
 --- a/src/rdkafka_broker.c
 +++ b/src/rdkafka_broker.c
 @@ -38,7 +38,7 @@
@@ -11,13 +11,10 @@ index 481c21d9..01bb7b49 100644
  #define _XOPEN_SOURCE
  #endif
  #include <signal.h>
-@@ -49,6 +49,10 @@
+@@ -49,6 +49,7 @@
  #include <string.h>
  #include <ctype.h>
  
-+#ifdef __MVS__
-+#include <strings.h>
-+#endif
 +
  #include "rd.h"
  #include "rdaddr.h"
