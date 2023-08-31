@@ -1,19 +1,16 @@
 diff --git a/src/rdkafka.c b/src/rdkafka.c
-index a353f7b4..59b413ff 100644
+index a353f7b4..7a7320e4 100644
 --- a/src/rdkafka.c
 +++ b/src/rdkafka.c
-@@ -39,7 +39,9 @@
+@@ -39,7 +39,6 @@
  #include <sys/types.h>
  #include <dirent.h>
  #endif
 -
-+#ifdef __MVS__
-+#include <strings.h>
-+#endif
  #include "rdkafka_int.h"
  #include "rdkafka_msg.h"
  #include "rdkafka_broker.h"
-@@ -1144,8 +1146,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
+@@ -1144,8 +1143,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
          /* Trigger any state-change waiters (which should check the
           * terminate flag whenever they wake up). */
          rd_kafka_brokers_broadcast_state_change(rk);
@@ -26,7 +23,7 @@ index a353f7b4..59b413ff 100644
                  int res;
                  /* Send op to trigger queue/io wake-up.
                   * The op itself is (likely) ignored by the receiver. */
-@@ -2609,7 +2615,11 @@ fail:
+@@ -2609,7 +2612,11 @@ fail:
          if (rk->rk_conf.sasl.provider)
                  rd_kafka_sasl_term(rk);
  
@@ -38,7 +35,7 @@ index a353f7b4..59b413ff 100644
                  int res;
                  thrd_join(rk->rk_background.thread, &res);
                  rd_kafka_q_destroy_owner(rk->rk_background.q);
-@@ -4995,7 +5005,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -4995,7 +5002,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
  #else
          DIR *dir;
          struct dirent *d;
@@ -47,7 +44,7 @@ index a353f7b4..59b413ff 100644
          struct stat st;
          int ret = 0;
  #endif
-@@ -5009,7 +5019,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -5009,7 +5016,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
                  if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
                          continue;
  
