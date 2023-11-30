@@ -1,12 +1,12 @@
 diff --git a/examples/kafkatest_verifiable_client.cpp b/examples/kafkatest_verifiable_client.cpp
-index bdb8607a..70b1d362 100644
+index bdb8607a..3b1bf7e5 100644
 --- a/examples/kafkatest_verifiable_client.cpp
 +++ b/examples/kafkatest_verifiable_client.cpp
 @@ -50,6 +50,8 @@
  #include "../win32/wingetopt.h"
  #elif _AIX
  #include <unistd.h>
-+#elif _ZOS
++#elif __MVS__
 +#include <unistd.h>
  #else
  #include <getopt.h>

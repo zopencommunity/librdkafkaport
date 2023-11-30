@@ -1,14 +1,16 @@
+LIBRDKAFKA_VERSION="2.2"
 export ZOPEN_GIT_URL="https://github.com/confluentinc/librdkafka.git"
 export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
 export ZOPEN_TYPE="GIT"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
 
-export ZOPEN_EXTRA_CFLAGS="-fzos-le-char-mode=ascii -std=gnu11 -mnocsect -fno-short-enums -Wno-error -mzos-target=zosv2r4 -I../src"
+export ZOPEN_EXTRA_CFLAGS="-Wno-error -mzos-target=zosv2r4 -I../src"
 
-export ZOPEN_EXTRA_CPPFLAGS="-D_ZOS -D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -D_XOPEN_SOURCE=600 -mzos-target=zosv2r4 -I../src-cpp"
+export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -mzos-target=zosv2r4 -I../src-cpp"
 
-export LIBS="-L/u/ibmuser/zopen/prod/zoslib/lib -L/u/ibmuser/zopen/prod/openssl/lib -L/u/ibmuser/zopen/prod/zstd/lib -L/u/ibmuser/zopen/prod/lz4/lib -L../src -lzoslib -lrdkafka -llz4 -lzstd -lcrypto -lssl -lzoslib-supp"
+#export LIBS="-L/u/ibmuser/zopen/prod/zoslib/lib -L/u/ibmuser/zopen/prod/openssl/lib -L/u/ibmuser/zopen/prod/zstd/lib -L/u/ibmuser/zopen/prod/lz4/lib -L../src -lzoslib -lrdkafka -llz4 -lzstd -lcrypto -lssl -lzoslib-supp"
+export LIBS="-L../src"
 
 export ZOPEN_CONFIGURE_OPTS="--prefix=\$ZOPEN_INSTALL_DIR --CPPFLAGS=\"\$CPPFLAGS\" --CFLAGS=\"\$CFLAGS\" --LDFLAGS=\"\$LDFLAGS\""
 
@@ -16,6 +18,7 @@ export ZOPEN_CONFIGURE_MINIMAL=yes
 
 zopen_check_results()
 {
+  #this will be done once we have the test compilation issue resolved
   dir="$1"
   pfx="$2"
   chk="$1/$2_check.log"
@@ -29,7 +32,16 @@ zopen_check_results()
 
 zopen_append_to_env()
 {
-  # echo envars outside of PATH, MANPATH, LIBPATH
+
+cat <<ZZ
+if [ ! -z "\$ZOPEN_IN_ZOPEN_BUILD" ]; then 
+export ZOPEN_EXTRA_CFLAGS="\${ZOPEN_EXTRA_CFLAGS} -I\$PWD/include" 
+export ZOPEN_EXTRA_CXXFLAGS="\${ZOPEN_EXTRA_CXXFLAGS} -I\$PWD/include" 
+export ZOPEN_EXTRA_LDFLAGS="\${ZOPEN_EXTRA_LDFLAGS} -L\$PWD/lib" 
+export ZOPEN_EXTRA_LIBS="\${ZOPEN_EXTRA_LIBS} -llibrdkafka"
+fi
+ZZ
+
 }
 
 zopen_append_to_setup()
@@ -41,5 +53,5 @@ zopen_get_version()
 {
   # Modify to echo the version of your tool/library
   # Rather than hardcoding the version, obtain the version by running the tool/library
-  echo "1.0.0"
+  echo "${LIBRDKAFKA_VERSION}"
 }

@@ -1,5 +1,5 @@
 diff --git a/mklove/Makefile.base b/mklove/Makefile.base
-index 91be4391..06437db7 100755
+index 91be4391..79dc7fc3 100755
 --- a/mklove/Makefile.base
 +++ b/mklove/Makefile.base
 @@ -48,7 +48,7 @@ ifneq ($(DESTDIR),)
@@ -11,7 +11,26 @@ index 91be4391..06437db7 100755
  INSTALL_PROGRAM?=	$(INSTALL)
  INSTALL_DATA?=		$(INSTALL) -m 644
  
-@@ -265,7 +265,7 @@ copyright-check:
+@@ -151,10 +151,16 @@ else
+ 	done
+ endif
+ 	cp $@ $(LIBNAME)-static-dbg.a
+-# The self-contained static library is always stripped, regardless
+-# of --enable-strip, since otherwise it would become too big.
++ifeq ($(_UNAME_S),OS/390)
++  # The -s option of strip is not supported on z/OS. On z/OS, the debug information can only 
++  # be removed by recompiling. strip does not modify the contents of any 
++  # executable file; it is functionally equivalent to touch file.
++else
++   # The self-contained static library is always nnstripped, regardless
++   # of --enable-strip, since otherwise it would become too big.
+ 	$(STRIP) -S $@
+ 	$(RANLIB) $@
++endif
+ 
+ ifneq ($(MKL_DYNAMIC_LIBS),)
+ 	@printf "$(MKL_RED)WARNING:$(MKL_YELLOW) $@: The following libraries were not available as static libraries and need to be linked dynamically: $(MKL_DYNAMIC_LIBS)$(MKL_CLR_RESET)\n"
+@@ -265,7 +271,7 @@ copyright-check:
  
  
  lib-install:
