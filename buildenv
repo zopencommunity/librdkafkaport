@@ -1,13 +1,16 @@
-LIBRDKAFKA_VERSION="2.2"
-export ZOPEN_GIT_URL="https://github.com/confluentinc/librdkafka.git"
-export ZOPEN_GIT_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
-export ZOPEN_TYPE="GIT"
+# bump: librdkafka-version /librdkafka_VERSION="(.*)"/ https://github.com/confluentinc/librdkafka.git|semver:^2
+LIBRDKAFKA_VERSION="2.2.0"
+OS_TARGET="zosv2r4"
+
+export ZOPEN_DEV_URL="https://github.com/confluentinc/librdkafka.git"
+export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
+export ZOPEN_BUILD_LINE="DEV"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
 
-export ZOPEN_EXTRA_CFLAGS="-Wno-error -mzos-target=zosv2r4 -I../src"
+export ZOPEN_EXTRA_CFLAGS="-Wno-error -mzos-target=${OS_TARGET} -I../src"
 
-export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -mzos-target=zosv2r4 -I../src-cpp"
+export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -mzos-target=${OS_TARGET} -I../src-cpp"
 
 #export LIBS="-L/u/ibmuser/zopen/prod/zoslib/lib -L/u/ibmuser/zopen/prod/openssl/lib -L/u/ibmuser/zopen/prod/zstd/lib -L/u/ibmuser/zopen/prod/lz4/lib -L../src -lzoslib -lrdkafka -llz4 -lzstd -lcrypto -lssl -lzoslib-supp"
 export LIBS="-L../src"
@@ -51,7 +54,5 @@ zopen_append_to_setup()
 
 zopen_get_version()
 {
-  # Modify to echo the version of your tool/library
-  # Rather than hardcoding the version, obtain the version by running the tool/library
   echo "${LIBRDKAFKA_VERSION}"
 }
