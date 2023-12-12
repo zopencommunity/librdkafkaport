@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_transport.c b/src/rdkafka_transport.c
-index f133d8fd..63e147c0 100644
+index f133d8fd..bca84556 100644
 --- a/src/rdkafka_transport.c
 +++ b/src/rdkafka_transport.c
 @@ -43,11 +43,15 @@
@@ -18,7 +18,35 @@ index f133d8fd..63e147c0 100644
  #if WITH_SSL
  #include "rdkafka_ssl.h"
  #endif
-@@ -133,7 +137,6 @@ static ssize_t rd_kafka_transport_socket_sendmsg(rd_kafka_transport_t *rktrans,
+@@ -60,7 +64,13 @@
+  *   a unique index somewhere, which we can't do without having a singleton
+  *   object, so instead we cut out the middle man and store the
+  *   rd_kafka_transport_t pointer directly in the thread-local memory. */
++#ifdef __MVS__
++pthread_key_t rd_kafka_curr_transport_key;
++int rd_kafka_curr_transport_key_s = 0;
++rd_kafka_transport_t *rd_kafka_curr_transport = NULL;
++#else
+ RD_TLS rd_kafka_transport_t *rd_kafka_curr_transport;
++#endif
+ 
+ 
+ static int rd_kafka_transport_poll(rd_kafka_transport_t *rktrans, int tmout);
+@@ -81,7 +91,13 @@ static void rd_kafka_transport_close0(rd_kafka_t *rk, rd_socket_t s) {
+  */
+ void rd_kafka_transport_close(rd_kafka_transport_t *rktrans) {
+ #if WITH_SSL
++#ifdef __MVS__
++	GET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport_key_s,rd_kafka_curr_transport,sizeof(rd_kafka_transport_t))
++        rd_kafka_curr_transport = rktrans;
++SET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport)
++#else
+         rd_kafka_curr_transport = rktrans;
++#endif /*__MVS__*/
+         if (rktrans->rktrans_ssl)
+                 rd_kafka_transport_ssl_close(rktrans);
+ #endif
+@@ -133,7 +149,6 @@ static ssize_t rd_kafka_transport_socket_sendmsg(rd_kafka_transport_t *rktrans,
          size_t iovlen;
          ssize_t r;
          size_t r2;
@@ -26,7 +54,7 @@ index f133d8fd..63e147c0 100644
          rd_slice_get_iov(slice, msg.msg_iov, &iovlen, IOV_MAX,
                           /* FIXME: Measure the effects of this */
                           rktrans->rktrans_sndbuf_size);
-@@ -276,7 +279,11 @@ static ssize_t rd_kafka_transport_socket_recvmsg(rd_kafka_transport_t *rktrans,
+@@ -276,7 +291,11 @@ static ssize_t rd_kafka_transport_socket_recvmsg(rd_kafka_transport_t *rktrans,
  #endif
          r = recvmsg(rktrans->rktrans_s, &msg, MSG_DONTWAIT);
          if (unlikely(r <= 0)) {
@@ -38,7 +66,7 @@ index f133d8fd..63e147c0 100644
                          return 0;
                  else if (r == 0 || (r == -1 && rd_socket_errno == ECONNRESET)) {
                          /* Receive 0 after POLLIN event means
-@@ -318,10 +325,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
+@@ -318,10 +337,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
  #endif
                               len,
                           0);
@@ -50,3 +78,61 @@ index f133d8fd..63e147c0 100644
                              || rd_socket_errno == WSAEWOULDBLOCK
  #endif
                          )
+@@ -375,8 +393,14 @@ static ssize_t rd_kafka_transport_socket_recv(rd_kafka_transport_t *rktrans,
+ void rd_kafka_transport_connect_done(rd_kafka_transport_t *rktrans,
+                                      char *errstr) {
+         rd_kafka_broker_t *rkb = rktrans->rktrans_rkb;
++#ifdef __MVS__
++	GET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport_key_s,rd_kafka_curr_transport,sizeof(rd_kafka_transport_t))
++        rd_kafka_curr_transport = rktrans;
++	SET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport)
++#else
+ 
+         rd_kafka_curr_transport = rktrans;
++#endif
+ 
+         rd_kafka_broker_connect_done(rkb, errstr);
+ }
+@@ -390,7 +414,13 @@ ssize_t rd_kafka_transport_send(rd_kafka_transport_t *rktrans,
+         ssize_t r;
+ #if WITH_SSL
+         if (rktrans->rktrans_ssl) {
++#ifdef __MVS__
++	GET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport_key_s,rd_kafka_curr_transport,sizeof(rd_kafka_transport_t))
++                rd_kafka_curr_transport = rktrans;
++SET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport)
++#else
+                 rd_kafka_curr_transport = rktrans;
++#endif/*__MVS__*/
+                 r = rd_kafka_transport_ssl_send(rktrans, slice, errstr,
+                                                 errstr_size);
+         } else
+@@ -410,7 +440,13 @@ ssize_t rd_kafka_transport_recv(rd_kafka_transport_t *rktrans,
+ 
+ #if WITH_SSL
+         if (rktrans->rktrans_ssl) {
++#ifdef __MVS__
++	GET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport_key_s,rd_kafka_curr_transport,sizeof(rd_kafka_transport_t))
+                 rd_kafka_curr_transport = rktrans;
++SET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport)
++#else
++                rd_kafka_curr_transport = rktrans;
++#endif /*__MVS__*/
+                 r = rd_kafka_transport_ssl_recv(rktrans, rbuf, errstr,
+                                                 errstr_size);
+         } else
+@@ -1003,8 +1039,13 @@ int rd_kafka_transport_io_serve(rd_kafka_transport_t *rktrans,
+                                 int timeout_ms) {
+         rd_kafka_broker_t *rkb = rktrans->rktrans_rkb;
+         int events;
+-
++#ifdef __MVS__
++	GET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport_key_s,rd_kafka_curr_transport,sizeof(rd_kafka_transport_t))
++        rd_kafka_curr_transport = rktrans;
++SET_KEY_VAL(rd_kafka_curr_transport_key,rd_kafka_curr_transport)
++#else
+         rd_kafka_curr_transport = rktrans;
++#endif /*__MNS__*/
+ 
+         if (
+ #ifndef _WIN32

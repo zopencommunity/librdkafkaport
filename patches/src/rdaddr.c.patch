@@ -1,0 +1,147 @@
+diff --git a/src/rdaddr.c b/src/rdaddr.c
+index 6fb2c66c..058d82cf 100644
+--- a/src/rdaddr.c
++++ b/src/rdaddr.c
+@@ -32,19 +32,38 @@
+ #include "rdaddr.h"
+ #include "rdrand.h"
+ 
++#ifdef __MVS__
++#include "zos_tls.h"
++#endif
++
+ #ifdef _WIN32
+ #include <ws2tcpip.h>
+ #endif
+ 
+ const char *rd_sockaddr2str(const void *addr, int flags) {
+         const rd_sockaddr_inx_t *a = (const rd_sockaddr_inx_t *)addr;
++#ifdef __MVS__
++	static pthread_key_t ret_key;
++	static pthread_key_t reti_key;
++	static int ret_key_s=0;
++	static int reti_key_s=0;
++	char **ret = NULL;
++	int *reti_p = NULL;
++	size_t size_of_ret = 256;
++#define reti (*reti_p)
++#else
+         static RD_TLS char ret[32][256];
+         static RD_TLS int reti = 0;
++#endif
+         char portstr[32];
+         int of      = 0;
+         int niflags = NI_NUMERICSERV;
+         int r;
+ 
++#ifdef __MVS__
++	GET_KEY_VAL_ARRAY(ret_key,ret_key_s,ret,sizeof(char),32,256)
++	GET_KEY_VAL(reti_key,reti_key_s,reti_p,sizeof(int))
++#endif
+         reti = (reti + 1) % 32;
+ 
+         switch (a->sinx_family) {
+@@ -52,7 +71,11 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+         case AF_INET6:
+                 if (flags & RD_SOCKADDR2STR_F_FAMILY)
+                         of += rd_snprintf(&ret[reti][of],
++#ifdef __MVS__
++                                          size_of_ret - of, "ipv%i#",
++#else
+                                           sizeof(ret[reti]) - of, "ipv%i#",
++#endif
+                                           a->sinx_family == AF_INET ? 4 : 6);
+ 
+                 if ((flags & RD_SOCKADDR2STR_F_PORT) &&
+@@ -65,8 +88,11 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+         retry:
+                 if ((r = getnameinfo(
+                          (const struct sockaddr *)a, RD_SOCKADDR_INX_LEN(a),
+-
++#ifdef __MVS__
++                         ret[reti] + of, size_of_ret - of,
++#else
+                          ret[reti] + of, sizeof(ret[reti]) - of,
++#endif
+ 
+                          (flags & RD_SOCKADDR2STR_F_PORT) ? portstr : NULL,
+ 
+@@ -87,9 +113,17 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+                 if (flags & RD_SOCKADDR2STR_F_PORT) {
+                         size_t len = strlen(ret[reti]);
+                         rd_snprintf(
++#ifdef __MVS__
++                            ret[reti] + len, size_of_ret - len, "%s:%s",
++#else
+                             ret[reti] + len, sizeof(ret[reti]) - len, "%s:%s",
++#endif
+                             a->sinx_family == AF_INET6 ? "]" : "", portstr);
+                 }
++#ifdef __MVS__
++		SET_KEY_VAL(reti_key,reti_p)
++                SET_KEY_VAL(ret_key,ret)
++#endif
+ 
+                 return ret[reti];
+         }
+@@ -98,18 +132,37 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+         /* Error-case */
+         rd_snprintf(ret[reti], sizeof(ret[reti]), "<unsupported:%s>",
+                     rd_family2str(a->sinx_family));
++#ifdef __MVS__
++		SET_KEY_VAL(reti_key,reti_p)
++                SET_KEY_VAL(ret_key,ret)
++#endif
+ 
+         return ret[reti];
+ }
+ 
+ 
+ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
++#ifdef __MVS__
++	static pthread_key_t snode_key;
++	static pthread_key_t ssvc_key;
++	static int snode_key_s=0;
++	static int ssvc_key_s=0;
++	size_t snode_size = 256;
++	size_t ssvc_size = 64;
++	char *snode = NULL;
++	char *ssvc = NULL;
++#else
++
+         static RD_TLS char snode[256];
+         static RD_TLS char ssvc[64];
++#endif
+         const char *t;
+         const char *svct = NULL;
+         size_t nodelen   = 0;
+-
++#ifdef __MVS__
++	GET_KEY_VAL(snode_key,snode_key_s,snode,sizeof(char)*snode_size)
++	GET_KEY_VAL(ssvc_key,ssvc_key_s,ssvc,sizeof(char)*ssvc_size)
++#endif
+         *snode = '\0';
+         *ssvc  = '\0';
+ 
+@@ -141,13 +194,21 @@ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
+ 
+         if (nodelen) {
+                 /* Truncate nodename if necessary. */
++#ifdef __MVS__
++                nodelen = RD_MIN(nodelen, (sizeof(char)*snode_size) - 1);
++#else
+                 nodelen = RD_MIN(nodelen, sizeof(snode) - 1);
++#endif
+                 memcpy(snode, nodesvc, nodelen);
+                 snode[nodelen] = '\0';
+         }
+ 
+         *node = snode;
+         *svc  = ssvc;
++#ifdef __MVS__
++	SET_KEY_VAL(snode_key,snode)
++	SET_KEY_VAL(ssvc_key,ssvc)
++#endif
+ 
+         return NULL;
+ }

@@ -1,8 +1,37 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..4f351096 100644
+index b0ec8e95..3650bc61 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
-@@ -608,13 +608,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+@@ -54,8 +54,15 @@ freely, subject to the following restrictions:
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+-
++#ifdef __MVS__
++#include "zos_tls.h"
++int *thrd_is_detached_p = NULL;
++pthread_key_t thrd_is_detached_key;
++int thrd_is_detached_key_s = 0;
++#define thrd_is_detached (*thrd_is_detached_p)
++#else
+ static RD_TLS int thrd_is_detached;
++#endif
+ 
+ 
+ int mtx_init(mtx_t *mtx, int type)
+@@ -217,7 +224,11 @@ int mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
+       dur.tv_nsec = 5000000;
+     }
+ 
++#ifdef __MVS__
++    usleep(dur.tv_sec * 1000000);
++#else
+     nanosleep(&dur, NULL);
++#endif
+   }
+ 
+   switch (rc) {
+@@ -608,13 +619,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
            if((err = pthread_create(thr, NULL, _thrd_wrapper_function,
                                     (void *)ti)) != 0) {
                    errno = err;
@@ -24,3 +53,30 @@ index b0ec8e95..4f351096 100644
    {
      rd_free(ti);
      return thrd_error;
+@@ -634,7 +653,14 @@ thrd_t thrd_current(void)
+ 
+ int thrd_detach(thrd_t thr)
+ {
++#ifdef __MVS__
++  GET_KEY_VAL(thrd_is_detached_key,thrd_is_detached_key_s,thrd_is_detached_p,sizeof(int))
++  thrd_is_detached = 1;
++SET_KEY_VAL(thrd_is_detached_key,thrd_is_detached_p)
++#else
+   thrd_is_detached = 1;
++#endif
++
+ #if defined(_TTHREAD_WIN32_)
+   /* https://stackoverflow.com/questions/12744324/how-to-detach-a-thread-on-windows-c#answer-12746081 */
+   return CloseHandle(thr) != 0 ? thrd_success : thrd_error;
+@@ -704,7 +730,11 @@ int thrd_join(thrd_t thr, int *res)
+ int thrd_sleep(const struct timespec *duration, struct timespec *remaining)
+ {
+ #if !defined(_TTHREAD_WIN32_)
++#ifdef __MVS__
++    return usleep(duration->tv_sec * 1000000);
++#else
+   return nanosleep(duration, remaining);
++#endif
+ #else
+   struct timespec start;
+   DWORD t;

@@ -1,0 +1,65 @@
+diff --git a/src/rdlist.c b/src/rdlist.c
+index 65e3eb97..19821954 100644
+--- a/src/rdlist.c
++++ b/src/rdlist.c
+@@ -29,7 +29,9 @@
+ 
+ #include "rd.h"
+ #include "rdlist.h"
+-
++#ifdef __MVS__
++#include "zos_tls.h"
++#endif
+ 
+ void rd_list_dump(const char *what, const rd_list_t *rl) {
+         int i;
+@@ -252,10 +254,19 @@ void *rd_list_pop(rd_list_t *rl) {
+  *
+  * This is true for all list comparator uses, i.e., both sort() and find().
+  */
++#ifdef __MVS__
++pthread_key_t rd_list_cmp_curr_key;
++int rd_list_cmp_curr_key_s=0;
++int (*rd_list_cmp_curr)(const void *, const void *) = NULL;
++#else
+ static RD_TLS int (*rd_list_cmp_curr)(const void *, const void *);
++#endif
+ 
+ static RD_INLINE int rd_list_cmp_trampoline(const void *_a, const void *_b) {
+         const void *a = *(const void **)_a, *b = *(const void **)_b;
++#ifdef __MVS__
++	GET_KEY_VAL(rd_list_cmp_curr_key,rd_list_cmp_curr_key_s,rd_list_cmp_curr,sizeof(rd_list_cmp_curr))
++#endif
+ 
+         return rd_list_cmp_curr(a, b);
+ }
+@@ -263,8 +274,13 @@ static RD_INLINE int rd_list_cmp_trampoline(const void *_a, const void *_b) {
+ void rd_list_sort(rd_list_t *rl, int (*cmp)(const void *, const void *)) {
+         if (unlikely(rl->rl_elems == NULL))
+                 return;
+-
++#ifdef __MVS__
++	GET_KEY_VAL(rd_list_cmp_curr_key,rd_list_cmp_curr_key_s,rd_list_cmp_curr,sizeof(rd_list_cmp_curr))
+         rd_list_cmp_curr = cmp;
++	SET_KEY_VAL(rd_list_cmp_curr_key,rd_list_cmp_curr)
++#else
++        rd_list_cmp_curr = cmp;
++#endif
+         qsort(rl->rl_elems, rl->rl_cnt, sizeof(*rl->rl_elems),
+               rd_list_cmp_trampoline);
+         rl->rl_flags |= RD_LIST_F_SORTED;
+@@ -335,7 +351,14 @@ void *rd_list_find(const rd_list_t *rl,
+ 
+         if (rl->rl_flags & RD_LIST_F_SORTED) {
+                 void **r;
++#ifdef __MVS__
++	GET_KEY_VAL(rd_list_cmp_curr_key,rd_list_cmp_curr_key_s,rd_list_cmp_curr,sizeof(rd_list_cmp_curr))
++        rd_list_cmp_curr = cmp;
++	SET_KEY_VAL(rd_list_cmp_curr_key,rd_list_cmp_curr)
++#else
+                 rd_list_cmp_curr = cmp;
++#endif
++ 
+                 r = bsearch(&match /*ptrptr to match elems*/, rl->rl_elems,
+                             rl->rl_cnt, sizeof(*rl->rl_elems),
+                             rd_list_cmp_trampoline);

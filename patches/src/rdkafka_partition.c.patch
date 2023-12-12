@@ -1,0 +1,34 @@
+diff --git a/src/rdkafka_partition.c b/src/rdkafka_partition.c
+index b175ffbc..4bddfdc3 100644
+--- a/src/rdkafka_partition.c
++++ b/src/rdkafka_partition.c
+@@ -4338,14 +4338,29 @@ void rd_kafka_partition_leader_destroy_free(void *ptr) {
+ 
+ 
+ const char *rd_kafka_fetch_pos2str(const rd_kafka_fetch_pos_t fetchpos) {
++#ifdef __MVS__
++        static pthread_key_t ret_key;
++        static int ret_key_s = 0;
++        char **ret = NULL;
++        size_t size_of_ret = 64;
++        GET_KEY_VAL_ARRAY(ret_key,ret_key_s,ret,sizeof(char),2,64)
++#else
+         static RD_TLS char ret[2][64];
++#endif
+         static int idx;
+ 
+         idx = (idx + 1) % 2;
++#ifdef __MVS__
++        rd_snprintf(
++            ret[idx], size_of_ret, "offset %s (leader epoch %" PRId32 ")",
++            rd_kafka_offset2str(fetchpos.offset), fetchpos.leader_epoch);
++        SET_KEY_VAL(ret_key,ret)
+ 
++#else
+         rd_snprintf(
+             ret[idx], sizeof(ret[idx]), "offset %s (leader epoch %" PRId32 ")",
+             rd_kafka_offset2str(fetchpos.offset), fetchpos.leader_epoch);
++#endif
+ 
+         return ret[idx];
+ }

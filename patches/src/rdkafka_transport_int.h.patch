@@ -1,0 +1,15 @@
+diff --git a/src/rdkafka_transport_int.h b/src/rdkafka_transport_int.h
+index 9e00f238..4c35095a 100644
+--- a/src/rdkafka_transport_int.h
++++ b/src/rdkafka_transport_int.h
+@@ -95,6 +95,10 @@ struct rd_kafka_transport_s {
+ };
+ 
+ 
++#ifdef __MVS__
++extern rd_kafka_transport_t *rd_kafka_curr_transport;
++#else
+ extern RD_TLS rd_kafka_transport_t *rd_kafka_curr_transport;
++#endif
+ 
+ #endif /* _RDKAFKA_TRANSPORT_INT_H_ */
