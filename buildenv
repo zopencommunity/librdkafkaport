@@ -3,7 +3,7 @@ LIBRDKAFKA_VERSION="2.2.0"
 OS_TARGET="zosv2r4"
 
 export ZOPEN_DEV_URL="https://github.com/confluentinc/librdkafka.git"
-export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4"
+export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4 getopt"
 export ZOPEN_BUILD_LINE="DEV"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
@@ -54,5 +54,5 @@ zopen_append_to_setup()
 
 zopen_get_version()
 {
-  echo "${LIBRDKAFKA_VERSION}"
+  echo "$LIBRDKAFKA_VERSION"
 }
