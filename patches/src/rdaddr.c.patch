@@ -7,7 +7,7 @@ index 6fb2c66c..058d82cf 100644
  #include "rdrand.h"
  
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
 +
  #ifdef _WIN32

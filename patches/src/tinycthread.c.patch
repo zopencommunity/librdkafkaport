@@ -8,7 +8,7 @@ index b0ec8e95..3650bc61 100644
  #endif
 -
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +int *thrd_is_detached_p = NULL;
 +pthread_key_t thrd_is_detached_key;
 +int thrd_is_detached_key_s = 0;

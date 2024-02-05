@@ -7,7 +7,7 @@ index bdab0029..2fca7fa9 100644
  #include "rdtime.h"
  #include "tinycthread.h"
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
  
  int rd_jitter(int low, int high) {

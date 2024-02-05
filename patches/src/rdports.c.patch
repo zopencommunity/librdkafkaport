@@ -7,7 +7,7 @@ index 9af8ede5..a70474fd 100644
   * http://forum.theorex.tech/t/different-declarations-of-qsort-r-on-mac-and-linux/93/2
   */
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +pthread_key_t rd_qsort_r_cmp_key;
 +pthread_key_t rd_qsort_r_arg_key;
 +int rd_qsort_r_cmp_key_s = 0;

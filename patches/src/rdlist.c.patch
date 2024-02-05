@@ -8,7 +8,7 @@ index 65e3eb97..19821954 100644
  #include "rdlist.h"
 -
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
  
  void rd_list_dump(const char *what, const rd_list_t *rl) {

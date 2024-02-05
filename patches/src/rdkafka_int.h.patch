@@ -7,7 +7,7 @@ index e586dd6e..be4f42b2 100644
  #endif
  
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
  #include <fcntl.h>
  

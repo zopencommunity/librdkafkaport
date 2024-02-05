@@ -8,7 +8,7 @@ index 99d9c174..801ace3f 100644
  #endif
 +#ifdef __MVS__
  
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
  #include "rdkafka_int.h"
  #include "rdkafka_msg.h"

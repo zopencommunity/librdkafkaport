@@ -8,7 +8,7 @@ index 85f745cb..9d3605ab 100644
  #include "rdkafka_cert.h"
 -
 +#ifdef __MVS__
-+#include "zos_tls.h"
++#include <zos-tls.h>
 +#endif
  #ifdef _WIN32
  #include <wincrypt.h>
