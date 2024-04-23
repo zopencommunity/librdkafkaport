@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_broker.c b/src/rdkafka_broker.c
-index e92f008b..fa35f690 100644
+index 685cf5bf..3c97f3e6 100644
 --- a/src/rdkafka_broker.c
 +++ b/src/rdkafka_broker.c
 @@ -38,7 +38,7 @@
@@ -19,31 +19,29 @@ index e92f008b..fa35f690 100644
  #include "rd.h"
  #include "rdaddr.h"
  #include "rdkafka_int.h"
-@@ -5500,11 +5501,28 @@ int32_t rd_kafka_broker_id(rd_kafka_broker_t *rkb) {
+@@ -5508,11 +5509,25 @@ int32_t rd_kafka_broker_id(rd_kafka_broker_t *rkb) {
   * Locality: any thread
   */
  const char *rd_kafka_broker_name(rd_kafka_broker_t *rkb) {
 +#ifdef __MVS__
-+        static pthread_key_t ret_key;
-+        static pthread_key_t reti_key;
-+        static int ret_key_s = 0;
-+        static int reti_key_s = 0;
++        static tls_t tsl_ret;
++        static tls_t tls_reti;
 +        char **ret = NULL;
 +        int *reti_p = NULL;
-+        GET_KEY_VAL_ARRAY(ret_key,ret_key_s,ret,sizeof(char),4,RD_KAFKA_NODENAME_SIZE)
-+        GET_KEY_VAL(reti_key,reti_key_s,reti_p,sizeof(int))
++        tsl_ret.sz = sizeof(char);
++        tls_reti.sz = sizeof(int);
++        ret = __tlsArray(&tsl_ret,4,RD_KAFKA_NODENAME_SIZE);
++        reti_p = __tlsValue(&tls_reti);
 +#define reti (*reti_p)
 +#else
          static RD_TLS char ret[4][RD_KAFKA_NODENAME_SIZE];
          static RD_TLS int reti = 0;
+-
 +#endif
- 
          reti = (reti + 1) % 4;
          mtx_lock(&rkb->rkb_logname_lock);
 +#ifdef __MVS__
 +        rd_snprintf(ret[reti], RD_KAFKA_NODENAME_SIZE, "%s", rkb->rkb_logname);
-+        SET_KEY_VAL(reti_key,reti_p)
-+        SET_KEY_VAL(ret_key,ret)
 +#endif
          rd_snprintf(ret[reti], sizeof(ret[reti]), "%s", rkb->rkb_logname);
          mtx_unlock(&rkb->rkb_logname_lock);

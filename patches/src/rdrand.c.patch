@@ -1,8 +1,8 @@
 diff --git a/src/rdrand.c b/src/rdrand.c
-index bdab0029..2fca7fa9 100644
+index bdab0029..1d5d5dd8 100644
 --- a/src/rdrand.c
 +++ b/src/rdrand.c
-@@ -30,18 +30,34 @@
+@@ -30,18 +30,33 @@
  #include "rdrand.h"
  #include "rdtime.h"
  #include "tinycthread.h"
@@ -14,10 +14,10 @@ index bdab0029..2fca7fa9 100644
          int rand_num;
  #if HAVE_RAND_R
 +#ifdef __MVS__
-+	static pthread_key_t seed_key;
-+	static int seed_key_s = 0;
-+        unsigned int *seed_p = NULL;
-+	GET_KEY_VAL(seed_key,seed_key_s,seed_p,sizeof(unsigned int))
++	static tls_t tls_seed;
++	unsigned int *seed_p = NULL;
++	tls_seed.sz = sizeof(unsigned int);
++	seed_p = (unsigned int *)__tlsValue(&tls_seed);
 +#define seed (*seed_p)
 +#else
          static RD_TLS unsigned int seed = 0;
@@ -30,7 +30,6 @@ index bdab0029..2fca7fa9 100644
                  seed = (unsigned int)(tv.tv_usec / 1000);
 +#ifdef __MVS__
 +                seed ^= (unsigned int)(intptr_t)(thrd_current().__);
-+SET_KEY_VAL(seed_key,seed_p)
 +#else
                  seed ^= (unsigned int)(intptr_t)thrd_current();
 +#endif

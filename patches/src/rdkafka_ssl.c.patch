@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_ssl.c b/src/rdkafka_ssl.c
-index 85f745cb..9d3605ab 100644
+index 0dd7e509..fddf85ef 100644
 --- a/src/rdkafka_ssl.c
 +++ b/src/rdkafka_ssl.c
 @@ -36,7 +36,9 @@
@@ -18,8 +18,7 @@ index 85f745cb..9d3605ab 100644
   */
  const char *rd_kafka_ssl_last_error_str(void) {
 +#ifdef __MVS__
-+	static pthread_key_t errstr_key;
-+	static int errstr_key_s = 0;
++	static tls_t tls_errstr;
 +	char *errstr = NULL;
 +	size_t size_of_errstr = 256;
 +#else
@@ -29,12 +28,13 @@ index 85f745cb..9d3605ab 100644
          const char *file, *data, *func;
          int line, flags;
 +#ifdef __MVS__
-+	GET_KEY_VAL(errstr_key,errstr_key_s, errstr,sizeof(char)*size_of_errstr)
++        tls_errstr.sz = sizeof(char)*size_of_errstr;
++        errstr = __tlsValue(&tls_errstr);
 +#endif
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000
          l = ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
-@@ -119,12 +131,18 @@ const char *rd_kafka_ssl_last_error_str(void) {
+@@ -119,8 +131,11 @@ const char *rd_kafka_ssl_last_error_str(void) {
  
          if (!l)
                  return "";
@@ -47,14 +47,7 @@ index 85f745cb..9d3605ab 100644
                      ERR_lib_error_string(l), func, file, line,
                      ((flags & ERR_TXT_STRING) && data && *data)
                          ? data
-                         : ERR_reason_error_string(l));
-+#ifdef __MVS__
-+	SET_KEY_VAL(errstr_key,errstr) 
-+#endif
- 
-         return errstr;
- }
-@@ -1772,6 +1790,8 @@ static RD_UNUSED unsigned long rd_kafka_transport_ssl_threadid_cb(void) {
+@@ -1773,6 +1788,8 @@ static RD_UNUSED unsigned long rd_kafka_transport_ssl_threadid_cb(void) {
           * and thread id, which means we can't use the
           * thrd_current() API that returns the handle. */
          return (unsigned long)GetCurrentThreadId();

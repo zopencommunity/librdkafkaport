@@ -1,20 +1,19 @@
 diff --git a/src/rdkafka_request.c b/src/rdkafka_request.c
-index b9e250a9..b4b6ee30 100644
+index 5ac7e0f1..08f67b7a 100644
 --- a/src/rdkafka_request.c
 +++ b/src/rdkafka_request.c
-@@ -62,9 +62,21 @@ static const char *rd_kafka_actions_descs[] = {
+@@ -62,9 +62,20 @@ static const char *rd_kafka_actions_descs[] = {
  };
  
  const char *rd_kafka_actions2str(int actions) {
 +#ifdef __MVS__
-+	static pthread_key_t actstr_key;
-+	static int actstr_key_s = 0;
++	static tls_t tls_actstr;
 +	static char *actstr = NULL;
 +	size_t size_of_actstr = 128;
-+	GET_KEY_VAL(actstr_key,actstr_key_s,actstr,sizeof(char)*size_of_actstr)
-+        actstr = rd_flags2str(actstr, sizeof(actstr), rd_kafka_actions_descs,
++	tls_actstr.sz = sizeof(char)*size_of_actstr;
++	actstr = __tlsValue(&tls_actstr);
++    rd_flags2str(actstr, sizeof(actstr), rd_kafka_actions_descs,
 +                            actions);
-+	SET_KEY_VAL(actstr_key,actstr)
 +	return actstr;
 +#else
          static RD_TLS char actstr[128];

@@ -1,14 +1,13 @@
 diff --git a/src/rdkafka_queue.c b/src/rdkafka_queue.c
-index 3e303795..a0d57393 100644
+index 3e303795..8cfd304e 100644
 --- a/src/rdkafka_queue.c
 +++ b/src/rdkafka_queue.c
-@@ -32,10 +32,24 @@
+@@ -32,10 +32,23 @@
  #include "rdkafka_topic.h"
  #include "rdkafka_interceptor.h"
  
 +#ifdef __MVS__
-+pthread_key_t rd_kafka_yield_thread_key;
-+int rd_kafka_yield_thread_key_s=0;
++tls_t tls_rd_kafka_yield_thread;
 +int *rd_kafka_yield_thread_p;
 +#define rd_kafka_yield_thread (*rd_kafka_yield_thread_p)
 +#else
@@ -17,55 +16,55 @@ index 3e303795..a0d57393 100644
  
  void rd_kafka_yield(rd_kafka_t *rk) {
 +#ifdef __MVS__
-+	GET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_key_s,rd_kafka_yield_thread_p,sizeof(int))
-         rd_kafka_yield_thread = 1;
-+SET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_p)
++	tls_rd_kafka_yield_thread.sz = sizeof(int);
++	rd_kafka_yield_thread_p = __tlsValue(&tls_rd_kafka_yield_thread);
++	*rd_kafka_yield_thread_p = 1;
 +#else
-+        rd_kafka_yield_thread = 1;
+         rd_kafka_yield_thread = 1;
 +#endif
 +
  }
  
  
-@@ -396,8 +410,13 @@ rd_kafka_op_t *rd_kafka_q_pop_serve(rd_kafka_q_t *rkq,
+@@ -396,8 +409,13 @@ rd_kafka_op_t *rd_kafka_q_pop_serve(rd_kafka_q_t *rkq,
          rd_dassert(cb_type);
  
          mtx_lock(&rkq->rkq_lock);
 -
 +#ifdef __MVS__
-+	GET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_key_s,rd_kafka_yield_thread_p,sizeof(int))
-+        rd_kafka_yield_thread = 0;
-+SET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_p)
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = __tlsValue(&tls_rd_kafka_yield_thread);
++        *rd_kafka_yield_thread_p = 0;
 +#else
          rd_kafka_yield_thread = 0;
 +#endif
          if (!(fwdq = rd_kafka_q_fwd_get(rkq, 0))) {
                  const rd_bool_t can_q_contain_fetched_msgs =
                      rd_kafka_q_can_contain_fetched_msgs(rkq, RD_DONT_LOCK);
-@@ -567,8 +586,13 @@ int rd_kafka_q_serve(rd_kafka_q_t *rkq,
+@@ -567,8 +585,13 @@ int rd_kafka_q_serve(rd_kafka_q_t *rkq,
                              0 /*no-locks*/);
  
          mtx_unlock(&rkq->rkq_lock);
 -
 +#ifdef __MVS__
-+	GET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_key_s,rd_kafka_yield_thread_p,sizeof(int))
-         rd_kafka_yield_thread = 0;
-+SET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_p)
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = __tlsValue(&tls_rd_kafka_yield_thread);
++        *rd_kafka_yield_thread_p = 0;
 +#else
-+        rd_kafka_yield_thread = 0;
+         rd_kafka_yield_thread = 0;
 +#endif
  
          /* Call callback for each op */
          while ((rko = TAILQ_FIRST(&localq.rkq_q))) {
-@@ -685,8 +709,13 @@ int rd_kafka_q_serve_rkmessages(rd_kafka_q_t *rkq,
+@@ -685,8 +708,13 @@ int rd_kafka_q_serve_rkmessages(rd_kafka_q_t *rkq,
                  rd_kafka_app_poll_blocking(rk);
  
          rd_timeout_init_timespec(&timeout_tspec, timeout_ms);
 -
 +#ifdef __MVS__
-+	GET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_key_s,rd_kafka_yield_thread_p,sizeof(int))
-+        rd_kafka_yield_thread = 0;
-+SET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_p)
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = __tlsValue(&tls_rd_kafka_yield_thread);
++        *rd_kafka_yield_thread_p = 0;
 +#else
          rd_kafka_yield_thread = 0;
 +#endif

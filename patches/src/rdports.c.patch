@@ -1,17 +1,15 @@
 diff --git a/src/rdports.c b/src/rdports.c
-index 9af8ede5..a70474fd 100644
+index 9af8ede5..3acde29a 100644
 --- a/src/rdports.c
 +++ b/src/rdports.c
-@@ -41,8 +41,18 @@
+@@ -41,8 +41,16 @@
   * on Win32 (qsort_s), OSX/FreeBSD (qsort_r with diff args):
   * http://forum.theorex.tech/t/different-declarations-of-qsort-r-on-mac-and-linux/93/2
   */
 +#ifdef __MVS__
 +#include <zos-tls.h>
-+pthread_key_t rd_qsort_r_cmp_key;
-+pthread_key_t rd_qsort_r_arg_key;
-+int rd_qsort_r_cmp_key_s = 0;
-+int rd_qsort_r_arg_key_s = 0;
++tls_t tls_rd_qsort_r_cmp;
++tls_t tls_rd_qsort_r_arg;
 +int (*rd_qsort_r_cmp)(const void *, const void *, void *);
 +void *rd_qsort_r_arg;
 +#else
@@ -21,27 +19,27 @@ index 9af8ede5..a70474fd 100644
  
  static RD_UNUSED int rd_qsort_r_trampoline(const void *a, const void *b) {
          return rd_qsort_r_cmp(a, b, rd_qsort_r_arg);
-@@ -53,9 +63,23 @@ void rd_qsort_r(void *base,
+@@ -53,9 +61,23 @@ void rd_qsort_r(void *base,
                  size_t size,
                  int (*compar)(const void *, const void *, void *),
                  void *arg) {
 +#ifdef __MVS__
-+	GET_KEY_VAL(rd_qsort_r_cmp_key,rd_qsort_r_cmp_key_s,rd_qsort_r_cmp,sizeof(rd_qsort_r_cmp))
-+	GET_KEY_VAL(rd_qsort_r_arg_key,rd_qsort_r_arg_key_s,rd_qsort_r_arg,sizeof(rd_qsort_r_arg))
-         rd_qsort_r_cmp = compar;
-         rd_qsort_r_arg = arg;
-+	SET_KEY_VAL(rd_qsort_r_cmp_key,rd_qsort_r_cmp)
-+	SET_KEY_VAL(rd_qsort_r_arg_key,rd_qsort_r_arg)
-         qsort(base, nmemb, size, rd_qsort_r_trampoline);
-         rd_qsort_r_cmp = NULL;
-         rd_qsort_r_arg = NULL;
-+	SET_KEY_VAL(rd_qsort_r_cmp_key,rd_qsort_r_cmp)
-+	SET_KEY_VAL(rd_qsort_r_arg_key,rd_qsort_r_arg)
-+#else
-+        rd_qsort_r_cmp = compar;
-+        rd_qsort_r_arg = arg;
++	void **tmp = NULL;
++	tls_rd_qsort_r_cmp.sz = sizeof(rd_qsort_r_cmp);
++	tls_rd_qsort_r_arg.sz = sizeof(rd_qsort_r_arg);
++	tmp = __tlsValue(&tls_rd_qsort_r_cmp);
++	*(void**)tmp = (void*)compar;
++	rd_qsort_r_cmp = ((int (*)(const void *, const void *,void *))*tmp);
++	rd_qsort_r_arg = __tlsValue(&tls_rd_qsort_r_arg);
++	memcpy(rd_qsort_r_arg,arg,sizeof(rd_qsort_r_arg));
 +        qsort(base, nmemb, size, rd_qsort_r_trampoline);
 +        rd_qsort_r_cmp = NULL;
 +        rd_qsort_r_arg = NULL;
++#else
+         rd_qsort_r_cmp = compar;
+         rd_qsort_r_arg = arg;
+         qsort(base, nmemb, size, rd_qsort_r_trampoline);
+         rd_qsort_r_cmp = NULL;
+         rd_qsort_r_arg = NULL;
 +#endif
  }

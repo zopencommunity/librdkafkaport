@@ -1,15 +1,21 @@
 diff --git a/src/rdkafka_op.c b/src/rdkafka_op.c
-index 34e9e3fd..55a15e14 100644
+index 2fe3a4ac..0c76bd42 100644
 --- a/src/rdkafka_op.c
 +++ b/src/rdkafka_op.c
-@@ -739,6 +739,10 @@ rd_kafka_op_res_t
+@@ -741,8 +741,16 @@ rd_kafka_op_res_t
  rd_kafka_op_call(rd_kafka_t *rk, rd_kafka_q_t *rkq, rd_kafka_op_t *rko) {
          rd_kafka_op_res_t res;
          rd_assert(rko->rko_op_cb);
-+/*madhu RD_TLS*/
 +#ifdef __MVS__
-+        GET_KEY_VAL(rd_kafka_yield_thread_key,rd_kafka_yield_thread_key_s,rd_kafka_yield_thread_p,sizeof(int))
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = __tlsValue(&tls_rd_kafka_yield_thread);
 +#endif
          res = rko->rko_op_cb(rk, rkq, rko);
++#ifdef __MVS__
++        if (unlikely(res == RD_KAFKA_OP_RES_YIELD || *rd_kafka_yield_thread_p))
++ #else
          if (unlikely(res == RD_KAFKA_OP_RES_YIELD || rd_kafka_yield_thread))
++#endif
                  return RD_KAFKA_OP_RES_YIELD;
+         if (res != RD_KAFKA_OP_RES_KEEP)
+                 rko->rko_op_cb = NULL;
