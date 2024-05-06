@@ -11,7 +11,7 @@ index b5bacece..42fdaa7d 100644
 +        rd_kafka_thread_name = __tlsValue(&tls_rd_kafka_thread_name);
 +        if(rd_kafka_thread_name[0]==0)
 +        {
-+        	strcpy(rd_kafka_thread_name,"app");
++        	strncpy(rd_kafka_thread_name,"app",3);
 +        }
 +#endif
  
