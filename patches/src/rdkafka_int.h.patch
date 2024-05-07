@@ -1,0 +1,62 @@
+diff --git a/src/rdkafka_int.h b/src/rdkafka_int.h
+index 46acf948..7e5d3d1d 100644
+--- a/src/rdkafka_int.h
++++ b/src/rdkafka_int.h
+@@ -52,6 +52,10 @@ typedef int mode_t;
+ #include "rdavg.h"
+ #include "rdlist.h"
+ 
++#ifdef __MVS__
++#include <zos-tls.h>
++#endif
++
+ #if WITH_SSL
+ #include <openssl/ssl.h>
+ #endif
+@@ -926,10 +930,20 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
+ 
+ 
+ 
++#ifdef __MVS__
++extern rd_kafka_resp_err_t *rd_kafka_last_error_code;
++extern tls_t tls_rd_kafka_last_error_code;
++#else
+ extern rd_kafka_resp_err_t RD_TLS rd_kafka_last_error_code;
++#endif
+ 
+ static RD_UNUSED RD_INLINE rd_kafka_resp_err_t
+ rd_kafka_set_last_error(rd_kafka_resp_err_t err, int errnox) {
++#ifdef __MVS__
++	tls_rd_kafka_last_error_code.sz = sizeof(rd_kafka_resp_err_t);
++	rd_kafka_last_error_code = __tlsValue(&tls_rd_kafka_last_error_code);
++#endif
++
+         if (errnox) {
+                 /* MSVC:
+                  * This is the correct way to set errno on Windows,
+@@ -940,7 +954,11 @@ rd_kafka_set_last_error(rd_kafka_resp_err_t err, int errnox) {
+                  * when using librdkafka as a dynamically loaded DLL. */
+                 rd_set_errno(errnox);
+         }
++#ifdef __MVS__
++        memcpy(rd_kafka_last_error_code,&err,sizeof(rd_kafka_resp_err_t));
++#else
+         rd_kafka_last_error_code = err;
++#endif
+         return err;
+ }
+ 
+@@ -975,7 +993,13 @@ rd_kafka_fatal_error_code(rd_kafka_t *rk) {
+ 
+ 
+ extern rd_atomic32_t rd_kafka_thread_cnt_curr;
++#ifdef __MVS__
++extern char *rd_kafka_thread_name;
++extern tls_t tls_rd_kafka_thread_name;
++extern size_t size_of_rd_kafka_thread_name;
++#else
+ extern char RD_TLS rd_kafka_thread_name[64];
++#endif
+ 
+ void rd_kafka_set_thread_name(const char *fmt, ...) RD_FORMAT(printf, 1, 2);
+ void rd_kafka_set_thread_sysname(const char *fmt, ...) RD_FORMAT(printf, 1, 2);

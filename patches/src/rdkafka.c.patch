@@ -1,16 +1,187 @@
 diff --git a/src/rdkafka.c b/src/rdkafka.c
-index a353f7b4..7a7320e4 100644
+index 429525a8..4a7d5078 100644
 --- a/src/rdkafka.c
 +++ b/src/rdkafka.c
-@@ -39,7 +39,6 @@
+@@ -39,7 +39,9 @@
  #include <sys/types.h>
  #include <dirent.h>
  #endif
 -
++#ifdef __MVS__
++#include <zos-tls.h>
++#endif
  #include "rdkafka_int.h"
  #include "rdkafka_msg.h"
  #include "rdkafka_broker.h"
-@@ -1144,8 +1143,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
+@@ -95,7 +97,12 @@ int rd_kafka_global_cnt;
+  * Last API error code, per thread.
+  * Shared among all rd_kafka_t instances.
+  */
++#ifdef __MVS__
++rd_kafka_resp_err_t *rd_kafka_last_error_code;
++tls_t tls_rd_kafka_last_error_code;
++#else
+ rd_kafka_resp_err_t RD_TLS rd_kafka_last_error_code;
++#endif
+ 
+ 
+ /**
+@@ -110,14 +117,32 @@ int rd_kafka_thread_cnt(void) {
+ /**
+  * Current thread's log name (TLS)
+  */
++#ifdef __MVS__
++char *rd_kafka_thread_name = NULL;
++tls_t tls_rd_kafka_thread_name;
++size_t size_of_rd_kafka_thread_name = 64;
++#else
+ char RD_TLS rd_kafka_thread_name[64] = "app";
++#endif
+ 
+ void rd_kafka_set_thread_name(const char *fmt, ...) {
+         va_list ap;
++	
++#ifdef __MVS__
++    tls_rd_kafka_thread_name.sz = size_of_rd_kafka_thread_name *sizeof(char);
++	rd_kafka_thread_name = (char *)__tlsValue(&tls_rd_kafka_thread_name);
++	if(rd_kafka_thread_name[0]==0)
++	{
++		strcpy(rd_kafka_thread_name,"app");
++	}
++#endif
+ 
+         va_start(ap, fmt);
+-        rd_vsnprintf(rd_kafka_thread_name, sizeof(rd_kafka_thread_name), fmt,
+-                     ap);
++#ifdef __MVS__
++        rd_vsnprintf(rd_kafka_thread_name, size_of_rd_kafka_thread_name, fmt, ap);
++#else
++        rd_vsnprintf(rd_kafka_thread_name, sizeof(rd_kafka_thread_name), fmt, ap);
++#endif
+         va_end(ap);
+ }
+ 
+@@ -127,14 +152,32 @@ void rd_kafka_set_thread_name(const char *fmt, ...) {
+  * Note the name must be 15 characters or less, because it is passed to
+  * pthread_setname_np on Linux which imposes this limit.
+  */
++#ifdef __MVS__
++char *rd_kafka_thread_sysname = NULL;
++tls_t tls_rd_kafka_thread_sysname;
++int rd_kafka_thread_sysname_key_s = 0;
++size_t size_of_rd_kafka_thread_sysname = 16;
++#else
+ static char RD_TLS rd_kafka_thread_sysname[16] = "app";
++#endif
+ 
+ void rd_kafka_set_thread_sysname(const char *fmt, ...) {
+         va_list ap;
++#ifdef __MVS__
++    tls_rd_kafka_thread_sysname.sz = size_of_rd_kafka_thread_sysname *sizeof(char);
++	rd_kafka_thread_sysname = (char *)__tlsValue(&tls_rd_kafka_thread_sysname);
++	if(rd_kafka_thread_sysname[0]==0)
++	{
++		strcpy(rd_kafka_thread_sysname,"app");
++	}
++#endif
+ 
+         va_start(ap, fmt);
+-        rd_vsnprintf(rd_kafka_thread_sysname, sizeof(rd_kafka_thread_sysname),
+-                     fmt, ap);
++#ifdef __MVS__
++        rd_vsnprintf(rd_kafka_thread_sysname,size_of_rd_kafka_thread_sysname ,fmt, ap);
++#else
++        rd_vsnprintf(rd_kafka_thread_sysname, sizeof(rd_kafka_thread_sysname), fmt, ap);
++#endif
+         va_end(ap);
+ 
+         thrd_setname(rd_kafka_thread_sysname);
+@@ -294,6 +337,15 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
+         unsigned int elen = 0;
+         unsigned int of   = 0;
+ 
++#ifdef __MVS__
++    tls_rd_kafka_thread_name.sz = size_of_rd_kafka_thread_name *sizeof(char);
++	rd_kafka_thread_name = (char *)__tlsValue(&tls_rd_kafka_thread_name);
++	if(rd_kafka_thread_name[0]==0)
++	{
++		strcpy(rd_kafka_thread_name,"app");
++	}
++#endif
++
+         if (level > conf->log_level)
+                 return;
+ 
+@@ -726,13 +778,27 @@ void rd_kafka_get_err_descs(const struct rd_kafka_err_desc **errdescs,
+ 
+ 
+ const char *rd_kafka_err2str(rd_kafka_resp_err_t err) {
++#ifdef __MVS__
++	char *ret = NULL;
++	static tls_t tls_ret;
++	size_t size_of_ret = 32;
++#else
+         static RD_TLS char ret[32];
++#endif
+         int idx = err - RD_KAFKA_RESP_ERR__BEGIN;
++#ifdef __MVS__
++        tls_ret.sz = size_of_ret*sizeof(char);
++        ret = (char*)__tlsValue(&tls_ret);
++#endif
+ 
+         if (unlikely(err <= RD_KAFKA_RESP_ERR__BEGIN ||
+                      err >= RD_KAFKA_RESP_ERR_END_ALL ||
+                      !rd_kafka_err_descs[idx].desc)) {
++#ifdef __MVS__
++                rd_snprintf(ret, size_of_ret, "Err-%i?", err);
++#else
+                 rd_snprintf(ret, sizeof(ret), "Err-%i?", err);
++#endif
+                 return ret;
+         }
+ 
+@@ -741,13 +807,25 @@ const char *rd_kafka_err2str(rd_kafka_resp_err_t err) {
+ 
+ 
+ const char *rd_kafka_err2name(rd_kafka_resp_err_t err) {
++#ifdef __MVS__
++	char *ret = NULL;
++	static tls_t tls_ret;
++	size_t size_of_ret = 32;
++	tls_ret.sz = size_of_ret*sizeof(char);
++	ret = (char *)__tlsValue(&tls_ret);
++#else
+         static RD_TLS char ret[32];
++#endif
+         int idx = err - RD_KAFKA_RESP_ERR__BEGIN;
+ 
+         if (unlikely(err <= RD_KAFKA_RESP_ERR__BEGIN ||
+                      err >= RD_KAFKA_RESP_ERR_END_ALL ||
+                      !rd_kafka_err_descs[idx].desc)) {
+-                rd_snprintf(ret, sizeof(ret), "ERR_%i?", err);
++#ifdef __MVS__
++                rd_snprintf(ret, size_of_ret, "Err-%i?", err);
++#else
++                rd_snprintf(ret, sizeof(ret), "Err-%i?", err);
++#endif
+                 return ret;
+         }
+ 
+@@ -756,7 +834,13 @@ const char *rd_kafka_err2name(rd_kafka_resp_err_t err) {
+ 
+ 
+ rd_kafka_resp_err_t rd_kafka_last_error(void) {
++#ifdef __MVS__
++	tls_rd_kafka_last_error_code.sz = sizeof(rd_kafka_resp_err_t);
++	rd_kafka_last_error_code = (rd_kafka_resp_err_t *)__tlsValue(&tls_rd_kafka_last_error_code);
++    return *rd_kafka_last_error_code;
++#else
+         return rd_kafka_last_error_code;
++#endif
+ }
+ 
+ 
+@@ -1159,8 +1243,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
          /* Trigger any state-change waiters (which should check the
           * terminate flag whenever they wake up). */
          rd_kafka_brokers_broadcast_state_change(rk);
@@ -23,7 +194,7 @@ index a353f7b4..7a7320e4 100644
                  int res;
                  /* Send op to trigger queue/io wake-up.
                   * The op itself is (likely) ignored by the receiver. */
-@@ -2609,7 +2612,11 @@ fail:
+@@ -2688,7 +2776,11 @@ fail:
          if (rk->rk_conf.sasl.provider)
                  rd_kafka_sasl_term(rk);
  
@@ -35,7 +206,130 @@ index a353f7b4..7a7320e4 100644
                  int res;
                  thrd_join(rk->rk_background.thread, &res);
                  rd_kafka_q_destroy_owner(rk->rk_background.q);
-@@ -4995,7 +5002,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -3206,8 +3298,13 @@ rd_kafka_consume0(rd_kafka_t *rk, rd_kafka_q_t *rkq, int timeout_ms) {
+ 
+         if (timeout_ms)
+                 rd_kafka_app_poll_blocking(rk);
+-
++#ifdef __MVS__
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = (int*) __tlsValue(&tls_rd_kafka_yield_thread);
++        *rd_kafka_yield_thread_p = 0;
++#else
+         rd_kafka_yield_thread = 0;
++#endif
+         while ((
+             rko = rd_kafka_q_pop(rkq, rd_timeout_remains_us(abs_timeout), 0))) {
+                 rd_kafka_op_res_t res;
+@@ -3989,6 +4086,10 @@ rd_kafka_op_res_t rd_kafka_poll_cb(rd_kafka_t *rk,
+                         }
+ 
+                         rd_kafka_msg_destroy(rk, rkm);
++#ifdef __MVS__
++                       tls_rd_kafka_yield_thread.sz = sizeof(int);
++                       rd_kafka_yield_thread_p = (int*) __tlsValue(&tls_rd_kafka_yield_thread);
++#endif
+ 
+                         if (unlikely(rd_kafka_yield_thread)) {
+                                 /* Callback called yield(),
+@@ -4417,8 +4518,14 @@ rd_kafka_resp_err_t rd_kafka_flush(rd_kafka_t *rk, int timeout_ms) {
+ 
+         if (rk->rk_type != RD_KAFKA_PRODUCER)
+                 return RD_KAFKA_RESP_ERR__NOT_IMPLEMENTED;
+-
++#ifdef __MVS__
++        tls_rd_kafka_yield_thread.sz = sizeof(int);
++        rd_kafka_yield_thread_p = (int*) __tlsValue(&tls_rd_kafka_yield_thread);
++        *rd_kafka_yield_thread_p = 0;
++        //SET_KEY_VAL(tls_rd_kafka_yield_thread,rd_kafka_yield_thread_p)
++#else
+         rd_kafka_yield_thread = 0;
++#endif
+ 
+         /* Set flushing flag on the producer for the duration of the
+          * flush() call. This tells producer_serve() that the linger.ms
+@@ -4570,9 +4677,22 @@ rd_kafka_resp_err_t rd_kafka_purge(rd_kafka_t *rk, int purge_flags) {
+ const char *rd_kafka_purge_flags2str(int flags) {
+         static const char *names[] = {"queue", "inflight", "non-blocking",
+                                       NULL};
++#ifdef __MVS__
++    char *ret;
++	static tls_t tls_ret;
++	size_t size_of_ret = 64;
++	tls_ret.sz = size_of_ret*sizeof(char);
++	ret = (char*) __tlsValue(&tls_ret);
++#else
+         static RD_TLS char ret[64];
++#endif
+ 
++#ifdef __MVS__
++    rd_flags2str(ret, size_of_ret, names, flags);
++	return ret;
++#else
+         return rd_flags2str(ret, sizeof(ret), names, flags);
++#endif
+ }
+ 
+ 
+@@ -4581,7 +4701,15 @@ int rd_kafka_version(void) {
+ }
+ 
+ const char *rd_kafka_version_str(void) {
++#ifdef __MVS__
++    char *ret = NULL;
++	static tls_t tls_ret;
++	size_t size_of_ret = 128;
++	tls_ret.sz = size_of_ret*sizeof(char);
++	ret = (char*)__tlsValue(&tls_ret);
++#else
+         static RD_TLS char ret[128];
++#endif
+         size_t of = 0, r;
+ 
+         if (*ret)
+@@ -4589,15 +4717,33 @@ const char *rd_kafka_version_str(void) {
+ 
+ #ifdef LIBRDKAFKA_GIT_VERSION
+         if (*LIBRDKAFKA_GIT_VERSION) {
++#ifdef __MVS__
++                of = rd_snprintf(ret, size_of_ret, "%s",
++                                 *LIBRDKAFKA_GIT_VERSION == 'v'
++                                     ? &LIBRDKAFKA_GIT_VERSION[1]
++                                     : LIBRDKAFKA_GIT_VERSION);
++                if (of > size_of_ret)
++                        of = size_of_ret;
++#else
+                 of = rd_snprintf(ret, sizeof(ret), "%s",
+                                  *LIBRDKAFKA_GIT_VERSION == 'v'
+                                      ? &LIBRDKAFKA_GIT_VERSION[1]
+                                      : LIBRDKAFKA_GIT_VERSION);
+                 if (of > sizeof(ret))
+                         of = sizeof(ret);
++#endif /*__MVS__*/
+         }
+ #endif
+ 
++#ifdef __MVS__
++#define _my_sprintf(...)                                                       \
++        do {                                                                   \
++                r = rd_snprintf(ret + of, size_of_ret - of, __VA_ARGS__);      \
++                if (r > size_of_ret - of)                                      \
++                        r = size_of_ret - of;                                  \
++                of += r;                                                       \
++        } while (0)
++#else
+ #define _my_sprintf(...)                                                       \
+         do {                                                                   \
+                 r = rd_snprintf(ret + of, sizeof(ret) - of, __VA_ARGS__);      \
+@@ -4605,6 +4751,7 @@ const char *rd_kafka_version_str(void) {
+                         r = sizeof(ret) - of;                                  \
+                 of += r;                                                       \
+         } while (0)
++#endif
+ 
+         if (of == 0) {
+                 int ver  = rd_kafka_version();
+@@ -5065,7 +5212,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
  #else
          DIR *dir;
          struct dirent *d;
@@ -44,7 +338,7 @@ index a353f7b4..7a7320e4 100644
          struct stat st;
          int ret = 0;
  #endif
-@@ -5009,7 +5016,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -5079,7 +5226,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
                  if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
                          continue;
  

@@ -1,0 +1,125 @@
+diff --git a/src/rdaddr.c b/src/rdaddr.c
+index 6fb2c66c..6b2306b0 100644
+--- a/src/rdaddr.c
++++ b/src/rdaddr.c
+@@ -32,19 +32,38 @@
+ #include "rdaddr.h"
+ #include "rdrand.h"
+ 
++#ifdef __MVS__
++#include <zos-tls.h>
++#endif
++
+ #ifdef _WIN32
+ #include <ws2tcpip.h>
+ #endif
+ 
+ const char *rd_sockaddr2str(const void *addr, int flags) {
+         const rd_sockaddr_inx_t *a = (const rd_sockaddr_inx_t *)addr;
++#ifdef __MVS__
++	static tls_t tls_ret;
++	static tls_t tls_reti;
++	char **ret = NULL;
++	int *reti_p = NULL;
++	size_t size_of_ret = 256;
++#define reti (*reti_p)
++#else
+         static RD_TLS char ret[32][256];
+         static RD_TLS int reti = 0;
++#endif
+         char portstr[32];
+         int of      = 0;
+         int niflags = NI_NUMERICSERV;
+         int r;
+ 
++#ifdef __MVS__
++        tls_ret.sz = sizeof(char);
++        tls_reti.sz = sizeof(int);
++	ret = __tlsArray(&tls_ret,32,256);
++	reti_p = (int *)__tlsValue(&tls_reti);
++#endif
+         reti = (reti + 1) % 32;
+ 
+         switch (a->sinx_family) {
+@@ -52,7 +71,11 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+         case AF_INET6:
+                 if (flags & RD_SOCKADDR2STR_F_FAMILY)
+                         of += rd_snprintf(&ret[reti][of],
++#ifdef __MVS__
++                                          size_of_ret - of, "ipv%i#",
++#else
+                                           sizeof(ret[reti]) - of, "ipv%i#",
++#endif
+                                           a->sinx_family == AF_INET ? 4 : 6);
+ 
+                 if ((flags & RD_SOCKADDR2STR_F_PORT) &&
+@@ -65,8 +88,11 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+         retry:
+                 if ((r = getnameinfo(
+                          (const struct sockaddr *)a, RD_SOCKADDR_INX_LEN(a),
+-
++#ifdef __MVS__
++                         ret[reti] + of, size_of_ret - of,
++#else
+                          ret[reti] + of, sizeof(ret[reti]) - of,
++#endif
+ 
+                          (flags & RD_SOCKADDR2STR_F_PORT) ? portstr : NULL,
+ 
+@@ -87,10 +113,15 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+                 if (flags & RD_SOCKADDR2STR_F_PORT) {
+                         size_t len = strlen(ret[reti]);
+                         rd_snprintf(
++#ifdef __MVS__
++                            ret[reti] + len, size_of_ret - len, "%s:%s",
++#else
+                             ret[reti] + len, sizeof(ret[reti]) - len, "%s:%s",
++#endif
+                             a->sinx_family == AF_INET6 ? "]" : "", portstr);
+                 }
+ 
++
+                 return ret[reti];
+         }
+ 
+@@ -104,12 +135,27 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+ 
+ 
+ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
++#ifdef __MVS__
++	static tls_t tls_snode;
++	static tls_t tls_ssvc;
++	size_t snode_size = 256;
++	size_t ssvc_size = 64;
++	char *snode = NULL;
++	char *ssvc = NULL;
++#else
++
+         static RD_TLS char snode[256];
+         static RD_TLS char ssvc[64];
++#endif
+         const char *t;
+         const char *svct = NULL;
+         size_t nodelen   = 0;
+-
++#ifdef __MVS__
++        tls_snode.sz = sizeof(char)*snode_size;
++        tls_ssvc.sz = sizeof(char)*ssvc_size;
++        snode = __tlsValue(&tls_snode);
++        ssvc = (char *)__tlsValue(&tls_ssvc);
++#endif
+         *snode = '\0';
+         *ssvc  = '\0';
+ 
+@@ -141,7 +187,11 @@ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
+ 
+         if (nodelen) {
+                 /* Truncate nodename if necessary. */
++#ifdef __MVS__
++                nodelen = RD_MIN(nodelen, (sizeof(char)*snode_size) - 1);
++#else
+                 nodelen = RD_MIN(nodelen, sizeof(snode) - 1);
++#endif
+                 memcpy(snode, nodesvc, nodelen);
+                 snode[nodelen] = '\0';
+         }
