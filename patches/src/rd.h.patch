@@ -1,32 +1,45 @@
 diff --git a/src/rd.h b/src/rd.h
-index fd6c307f..edff96f9 100644
+index fd6c307f..2b034c9c 100644
 --- a/src/rd.h
 +++ b/src/rd.h
-@@ -130,18 +130,27 @@
+@@ -130,21 +130,36 @@
   * will fail anyway, so no need to handle it handsomely.
   */
  static RD_INLINE RD_UNUSED void *rd_calloc(size_t num, size_t sz) {
-+      	// z/OS	returns	null when size is 0 which is different than linux.
-+      	if (sz == 0)
-+      	  sz=1;
++  	#ifdef __MVS__
++        // z/OS returns null when size is 0 which is different than linux.
++        if (sz == 0)
++          sz=1;
++        #endif
          void *p = calloc(num, sz);
-         rd_assert(p);
+-        rd_assert(p);
++  	rd_assert(p);
          return p;
  }
  
  static RD_INLINE RD_UNUSED void *rd_malloc(size_t sz) {
++        #ifdef __MVS__
 +        // z/OS returns null when size is 0 which is different than linux.
 +        if (sz == 0)
 +          sz=1;
++        #endif
          void *p = malloc(sz);
          rd_assert(p);
-         return p;
+-        return p;
++   	return p;
  }
  
  static RD_INLINE RD_UNUSED void *rd_realloc(void *ptr, size_t sz) {
-+      	// z/OS	returns	null when size is 0 which is different than linux.
-+      	if (sz == 0)
-+      	  sz=1;
++        #ifdef __MVS__
++	// z/OS returns null when size is 0 which is different than linux.
++        if (sz == 0)
++          sz=1;
++        #endif
          void *p = realloc(ptr, sz);
-         rd_assert(p);
-         return p;
+-        rd_assert(p);
+-        return p;
++	rd_assert(p);
++	return p;
+ }
+ 
+ static RD_INLINE RD_UNUSED void rd_free(void *ptr) {
