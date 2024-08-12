@@ -1,0 +1,371 @@
+diff --git a/src/rdkafka_sasl_oauthbearer_oidc.c b/src/rdkafka_sasl_oauthbearer_oidc.c
+index d56efbf3..a2222429 100644
+--- a/src/rdkafka_sasl_oauthbearer_oidc.c
++++ b/src/rdkafka_sasl_oauthbearer_oidc.c
+@@ -34,6 +34,7 @@
+  */
+ #include "rdkafka_int.h"
+ #include "rdkafka_sasl_int.h"
++#include "rdkafka_conf.h"
+ #include "rdunittest.h"
+ #include "cJSON.h"
+ #include <curl/curl.h>
+@@ -83,28 +84,26 @@ static char *rd_kafka_oidc_build_auth_header(const char *client_id,
+         return authorization_base64_header;
+ }
+ 
+-
+ /**
+- * @brief Build headers for HTTP(S) requests based on \p client_id
+- *        and \p client_secret. The result will be returned in \p *headersp.
++ * @brief Build headers for HTTP(S) requests based on \p grant_type
++ *        and the result will be returned in \p *headersp.
+  *
+  * @locality Any thread.
+  */
+-static void rd_kafka_oidc_build_headers(const char *client_id,
+-                                        const char *client_secret,
++static void rd_kafka_oidc_build_headers(const rd_kafka_conf_t *conf,
+                                         struct curl_slist **headersp) {
+         char *authorization_base64_header;
+ 
+-        authorization_base64_header =
+-            rd_kafka_oidc_build_auth_header(client_id, client_secret);
+-
++        if(conf->sasl.oauthbearer.grant_type == RD_KAFKA_SASL_OAUTHBEARER_CLIENT_CREDENTIALS){
++                authorization_base64_header =
++                rd_kafka_oidc_build_auth_header(conf->sasl.oauthbearer.client_id, conf->sasl.oauthbearer.client_secret);
++                *headersp = curl_slist_append(*headersp, authorization_base64_header);
++                rd_free(authorization_base64_header);
++        }
+         *headersp = curl_slist_append(*headersp, "Accept: application/json");
+-        *headersp = curl_slist_append(*headersp, authorization_base64_header);
+ 
+         *headersp = curl_slist_append(
+             *headersp, "Content-Type: application/x-www-form-urlencoded");
+-
+-        rd_free(authorization_base64_header);
+ }
+ 
+ /**
+@@ -217,6 +216,54 @@ static void rd_kafka_oidc_build_post_fields(const char *scope,
+         }
+ }
+ 
++/**
++ * @brief Build post_fields with \p scope.
++ *        The format of the post_fields is
++ *        `grant_type=password&scope=scope`
++ *        The post_fields will be returned in \p *post_fields.
++ *        The post_fields_size will be returned in \p post_fields_size.
++ *
++ */
++static void rd_kafka_oidc_build_post_fields_for_password(const rd_kafka_conf_t *conf,
++                                            char **post_fields,
++                                            size_t *post_fields_size) {
++        size_t total_size = strlen("grant_type=password");
++        if (conf->sasl.oauthbearer.scope) {
++                total_size += strlen("&scope=") + strlen(conf->sasl.oauthbearer.scope);
++        }
++        if (conf->sasl.oauthbearer.user_name) {
++                total_size += strlen("&username=") + strlen(conf->sasl.oauthbearer.user_name);
++        }
++        if (conf->sasl.oauthbearer.user_password) {
++                total_size += strlen("&password=") + strlen(conf->sasl.oauthbearer.user_password);
++        }
++        if (conf->sasl.oauthbearer.client_id) {
++                total_size += strlen("&client_id=") + strlen(conf->sasl.oauthbearer.client_id);
++        }
++        *post_fields = rd_malloc(total_size + 1);
++        if (*post_fields == NULL) {
++                *post_fields_size = 0;
++                return;
++        }
++
++        char *p = *post_fields;
++        p += sprintf(p, "grant_type=password");
++
++        if (conf->sasl.oauthbearer.scope) {
++                p += sprintf(p, "&scope=%s", conf->sasl.oauthbearer.scope);
++        }
++        if (conf->sasl.oauthbearer.user_name) {
++                p += sprintf(p, "&username=%s", conf->sasl.oauthbearer.user_name);
++        }
++        if (conf->sasl.oauthbearer.user_password) {
++                p += sprintf(p, "&password=%s", conf->sasl.oauthbearer.user_password);
++        }
++        if (conf->sasl.oauthbearer.client_id) {
++                p += sprintf(p, "&client_id=%s", conf->sasl.oauthbearer.client_id);
++        }
++
++        *post_fields_size = p - *post_fields;
++}
+ 
+ /**
+  * @brief Implementation of Oauth/OIDC token refresh callback function,
+@@ -262,13 +309,19 @@ void rd_kafka_oidc_token_refresh_cb(rd_kafka_t *rk,
+         if (rd_kafka_terminating(rk))
+                 return;
+ 
+-        rd_kafka_oidc_build_headers(rk->rk_conf.sasl.oauthbearer.client_id,
+-                                    rk->rk_conf.sasl.oauthbearer.client_secret,
++        rd_kafka_oidc_build_headers(&rk->rk_conf,
+                                     &headers);
+ 
+         /* Build post fields */
+-        rd_kafka_oidc_build_post_fields(rk->rk_conf.sasl.oauthbearer.scope,
++        if(rk->rk_conf.sasl.oauthbearer.grant_type == RD_KAFKA_SASL_OAUTHBEARER_PASSWORD) {
++                /* If the grant type is "password", build the POST fields for the password grant type */
++                rd_kafka_oidc_build_post_fields_for_password(&rk->rk_conf,
++                                        &post_fields, &post_fields_size);
++        } else {
++                /* For any other grant type, build the POST fields using the client_credentials */
++                rd_kafka_oidc_build_post_fields(rk->rk_conf.sasl.oauthbearer.scope,
+                                         &post_fields, &post_fields_size);
++        }
+ 
+         token_url = rk->rk_conf.sasl.oauthbearer.token_endpoint_url;
+ 
+@@ -340,22 +393,23 @@ void rd_kafka_oidc_token_refresh_cb(rd_kafka_t *rk,
+                 goto done;
+         }
+ 
+-        jwt_sub = cJSON_GetObjectItem(payloads, "sub");
++        jwt_sub = cJSON_GetObjectItem(payloads,rk->rk_conf.sasl.oauthbearer.principal_name );
+         if (jwt_sub == NULL) {
+-                rd_kafka_oauthbearer_set_token_failure(
+-                    rk,
+-                    "Expected JSON JWT response with "
+-                    "\"sub\" field");
+-                goto done;
++                rd_kafka_log(rk, LOG_WARNING, "OIDC",
++                             "Expected JSON JWT response with "
++                             "valid \"%s\" field",
++                             rk->rk_conf.sasl.oauthbearer.principal_name);
+         }
+ 
+         sub = cJSON_GetStringValue(jwt_sub);
+-        if (sub == NULL) {
++        if (jwt_sub != NULL && sub == NULL) {
+                 rd_kafka_oauthbearer_set_token_failure(
+                     rk,
+                     "Expected JSON JWT response with "
+                     "valid \"sub\" field");
+                 goto done;
++        } else {
++                sub = "";
+         }
+ 
+         if (rk->rk_conf.sasl.oauthbearer.extensions_str) {
+@@ -574,6 +628,199 @@ static int ut_sasl_oauthbearer_oidc_post_fields_with_empty_scope(void) {
+         RD_UT_PASS();
+ }
+ 
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_all_fields(void) {
++    rd_kafka_conf_t conf = {
++        .sasl.oauthbearer.scope = "test-scope",
++        .sasl.oauthbearer.user_name = "user",
++        .sasl.oauthbearer.user_password = "pass",
++        .sasl.oauthbearer.client_id = "client_id"
++    };
++
++    static const char *expected_post_fields =
++        "grant_type=password&scope=test-scope&username=user&password=pass&client_id=client_id";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
++
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_no_scope(void) {
++    rd_kafka_conf_t conf = {
++        .sasl.oauthbearer.user_name = "user",
++        .sasl.oauthbearer.user_password = "pass",
++        .sasl.oauthbearer.client_id = "client_id"
++    };
++
++    static const char *expected_post_fields =
++        "grant_type=password&username=user&password=pass&client_id=client_id";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
++
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_no_username(void) {
++    rd_kafka_conf_t conf = {
++        .sasl.oauthbearer.scope = "test-scope",
++        .sasl.oauthbearer.user_password = "pass",
++        .sasl.oauthbearer.client_id = "client_id"
++    };
++
++    static const char *expected_post_fields =
++        "grant_type=password&scope=test-scope&password=pass&client_id=client_id";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
++
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_no_password(void) {
++    rd_kafka_conf_t conf = {
++        .sasl.oauthbearer.scope = "test-scope",
++        .sasl.oauthbearer.user_name = "user",
++        .sasl.oauthbearer.client_id = "client_id"
++    };
++
++    static const char *expected_post_fields =
++        "grant_type=password&scope=test-scope&username=user&client_id=client_id";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
++
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_no_client_id(void) {
++    rd_kafka_conf_t conf = {
++        .sasl.oauthbearer.scope = "test-scope",
++        .sasl.oauthbearer.user_name = "user",
++        .sasl.oauthbearer.user_password = "pass"
++    };
++
++    static const char *expected_post_fields =
++        "grant_type=password&scope=test-scope&username=user&password=pass";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
++
++static int ut_sasl_oauthbearer_oidc_post_fields_for_password_no_fields(void) {
++    rd_kafka_conf_t conf = {0}; // All fields are NULL
++
++    static const char *expected_post_fields = "grant_type=password";
++
++    size_t expected_post_fields_size = strlen(expected_post_fields);
++
++    size_t post_fields_size;
++    char *post_fields;
++
++    RD_UT_BEGIN();
++
++    rd_kafka_oidc_build_post_fields_for_password(&conf, &post_fields, &post_fields_size);
++
++    RD_UT_ASSERT(expected_post_fields_size == post_fields_size,
++                 "Expected expected_post_fields_size is %" PRIusz
++                 " received post_fields_size is %" PRIusz,
++                 expected_post_fields_size, post_fields_size);
++    RD_UT_ASSERT(!strcmp(expected_post_fields, post_fields),
++                 "Expected expected_post_fields is %s"
++                 " received post_fields is %s",
++                 expected_post_fields, post_fields);
++
++    rd_free(post_fields);
++
++    RD_UT_PASS();
++}
+ 
+ /**
+  * @brief make sure the jwt is able to be extracted from HTTP(S) requests
+@@ -585,5 +832,11 @@ int unittest_sasl_oauthbearer_oidc(void) {
+         fails += ut_sasl_oauthbearer_oidc_with_empty_key();
+         fails += ut_sasl_oauthbearer_oidc_post_fields();
+         fails += ut_sasl_oauthbearer_oidc_post_fields_with_empty_scope();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_all_fields();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_no_scope();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_no_username();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_no_password();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_no_client_id();
++        fails += ut_sasl_oauthbearer_oidc_post_fields_for_password_no_fields();
+         return fails;
+ }
