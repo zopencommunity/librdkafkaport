@@ -1,0 +1,26 @@
+diff --git a/tests/interceptor_test/Makefile b/tests/interceptor_test/Makefile
+index 125e3603..a34eb057 100644
+--- a/tests/interceptor_test/Makefile
++++ b/tests/interceptor_test/Makefile
+@@ -1,7 +1,7 @@
+ PKGNAME=	interceptor_test
+ LIBNAME=	interceptor_test
+ LIBVER=		1
+-
++_UNAME_S := $(shell uname -s)
+ -include ../../Makefile.config
+ 
+ SRCS=		interceptor_test.c
+@@ -13,7 +13,11 @@ CPPFLAGS+=-I../../src
+ LDFLAGS+=-L../../src
+ LIBS+=-lrdkafka
+ 
+-all: lib
++ifeq ($(_UNAME_S),OS/390)
++  all: interceptor_test.a
++else 
++  all: lib 
++endif
+ 
+ include ../../mklove/Makefile.base
+ 

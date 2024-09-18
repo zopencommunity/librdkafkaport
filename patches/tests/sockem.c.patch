@@ -1,0 +1,17 @@
+diff --git a/tests/sockem.c b/tests/sockem.c
+index bf707a9b..40b3e6d1 100644
+--- a/tests/sockem.c
++++ b/tests/sockem.c
+@@ -40,7 +40,12 @@
+ 
+ #include "sockem.h"
+ 
++#ifdef __MVS__
++#include <bsd/sys/queue.h>
++#define MSG_DONTWAIT 0
++#else
+ #include <sys/queue.h>
++#endif
+ 
+ #ifdef __APPLE__
+ #include <sys/time.h> /* for gettimeofday() */
