@@ -1,5 +1,5 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..cd2a4a11 100644
+index b0ec8e95..2edefa54 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
 @@ -54,8 +54,14 @@ freely, subject to the following restrictions:
@@ -55,3 +55,12 @@ index b0ec8e95..cd2a4a11 100644
  #if defined(_TTHREAD_WIN32_)
    /* https://stackoverflow.com/questions/12744324/how-to-detach-a-thread-on-windows-c#answer-12746081 */
    return CloseHandle(thr) != 0 ? thrd_success : thrd_error;
+@@ -890,7 +911,7 @@ int _tthread_timespec_get(struct timespec *ts, int base)
+ #endif /* _TTHREAD_EMULATE_TIMESPEC_GET_ */
+ 
+ #if defined(_TTHREAD_WIN32_)
+-void call_once(once_flag *flag, void (*func)(void))
++void rd_call_once(once_flag *flag, void (*func)(void))
+ {
+   /* The idea here is that we use a spin lock (via the
+      InterlockedCompareExchange function) to restrict access to the

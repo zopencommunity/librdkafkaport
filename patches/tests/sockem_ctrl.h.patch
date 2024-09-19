@@ -1,0 +1,16 @@
+diff --git a/tests/sockem_ctrl.h b/tests/sockem_ctrl.h
+index db616d67..48cf5e5d 100644
+--- a/tests/sockem_ctrl.h
++++ b/tests/sockem_ctrl.h
+@@ -29,7 +29,11 @@
+ #ifndef _SOCKEM_CTRL_H_
+ #define _SOCKEM_CTRL_H_
+ 
++#ifdef __MVS__
++#include <bsd/sys/queue.h>
++#else
+ #include <sys/queue.h>
++#endif
+ 
+ struct sockem_cmd {
+         TAILQ_ENTRY(sockem_cmd) link;

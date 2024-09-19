@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka.c b/src/rdkafka.c
-index 429525a8..4a7d5078 100644
+index 901f3117..75681578 100644
 --- a/src/rdkafka.c
 +++ b/src/rdkafka.c
 @@ -39,7 +39,9 @@
@@ -13,7 +13,7 @@ index 429525a8..4a7d5078 100644
  #include "rdkafka_int.h"
  #include "rdkafka_msg.h"
  #include "rdkafka_broker.h"
-@@ -95,7 +97,12 @@ int rd_kafka_global_cnt;
+@@ -96,7 +98,12 @@ int rd_kafka_global_cnt;
   * Last API error code, per thread.
   * Shared among all rd_kafka_t instances.
   */
@@ -26,7 +26,7 @@ index 429525a8..4a7d5078 100644
  
  
  /**
-@@ -110,14 +117,32 @@ int rd_kafka_thread_cnt(void) {
+@@ -111,14 +118,32 @@ int rd_kafka_thread_cnt(void) {
  /**
   * Current thread's log name (TLS)
   */
@@ -61,7 +61,7 @@ index 429525a8..4a7d5078 100644
          va_end(ap);
  }
  
-@@ -127,14 +152,32 @@ void rd_kafka_set_thread_name(const char *fmt, ...) {
+@@ -128,14 +153,32 @@ void rd_kafka_set_thread_name(const char *fmt, ...) {
   * Note the name must be 15 characters or less, because it is passed to
   * pthread_setname_np on Linux which imposes this limit.
   */
@@ -96,7 +96,16 @@ index 429525a8..4a7d5078 100644
          va_end(ap);
  
          thrd_setname(rd_kafka_thread_sysname);
-@@ -294,6 +337,15 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
+@@ -167,7 +210,7 @@ static void rd_kafka_global_init0(void) {
+  * @brief Initialize once per process
+  */
+ void rd_kafka_global_init(void) {
+-        call_once(&rd_kafka_global_init_once, rd_kafka_global_init0);
++        rd_call_once(&rd_kafka_global_init_once, rd_kafka_global_init0);
+ }
+ 
+ 
+@@ -295,6 +338,15 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
          unsigned int elen = 0;
          unsigned int of   = 0;
  
@@ -112,7 +121,7 @@ index 429525a8..4a7d5078 100644
          if (level > conf->log_level)
                  return;
  
-@@ -726,13 +778,27 @@ void rd_kafka_get_err_descs(const struct rd_kafka_err_desc **errdescs,
+@@ -725,13 +777,27 @@ void rd_kafka_get_err_descs(const struct rd_kafka_err_desc **errdescs,
  
  
  const char *rd_kafka_err2str(rd_kafka_resp_err_t err) {
@@ -140,7 +149,7 @@ index 429525a8..4a7d5078 100644
                  return ret;
          }
  
-@@ -741,13 +807,25 @@ const char *rd_kafka_err2str(rd_kafka_resp_err_t err) {
+@@ -740,13 +806,25 @@ const char *rd_kafka_err2str(rd_kafka_resp_err_t err) {
  
  
  const char *rd_kafka_err2name(rd_kafka_resp_err_t err) {
@@ -167,7 +176,7 @@ index 429525a8..4a7d5078 100644
                  return ret;
          }
  
-@@ -756,7 +834,13 @@ const char *rd_kafka_err2name(rd_kafka_resp_err_t err) {
+@@ -755,7 +833,13 @@ const char *rd_kafka_err2name(rd_kafka_resp_err_t err) {
  
  
  rd_kafka_resp_err_t rd_kafka_last_error(void) {
@@ -181,7 +190,7 @@ index 429525a8..4a7d5078 100644
  }
  
  
-@@ -1159,8 +1243,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
+@@ -1166,8 +1250,12 @@ static void rd_kafka_destroy_internal(rd_kafka_t *rk) {
          /* Trigger any state-change waiters (which should check the
           * terminate flag whenever they wake up). */
          rd_kafka_brokers_broadcast_state_change(rk);
@@ -194,7 +203,16 @@ index 429525a8..4a7d5078 100644
                  int res;
                  /* Send op to trigger queue/io wake-up.
                   * The op itself is (likely) ignored by the receiver. */
-@@ -2688,7 +2776,11 @@ fail:
+@@ -2251,7 +2339,7 @@ rd_kafka_t *rd_kafka_new(rd_kafka_type_t type,
+         /* Seed PRNG, don't bother about HAVE_RAND_R, since it is pretty cheap.
+          */
+         if (rk->rk_conf.enable_random_seed)
+-                call_once(&rd_kafka_global_srand_once, rd_kafka_global_srand);
++                rd_call_once(&rd_kafka_global_srand_once, rd_kafka_global_srand);
+ 
+         /* Call on_new() interceptors */
+         rd_kafka_interceptors_on_new(rk, &rk->rk_conf);
+@@ -2698,7 +2786,11 @@ fail:
          if (rk->rk_conf.sasl.provider)
                  rd_kafka_sasl_term(rk);
  
@@ -206,7 +224,7 @@ index 429525a8..4a7d5078 100644
                  int res;
                  thrd_join(rk->rk_background.thread, &res);
                  rd_kafka_q_destroy_owner(rk->rk_background.q);
-@@ -3206,8 +3298,13 @@ rd_kafka_consume0(rd_kafka_t *rk, rd_kafka_q_t *rkq, int timeout_ms) {
+@@ -3216,8 +3308,13 @@ rd_kafka_consume0(rd_kafka_t *rk, rd_kafka_q_t *rkq, int timeout_ms) {
  
          if (timeout_ms)
                  rd_kafka_app_poll_blocking(rk);
@@ -221,7 +239,7 @@ index 429525a8..4a7d5078 100644
          while ((
              rko = rd_kafka_q_pop(rkq, rd_timeout_remains_us(abs_timeout), 0))) {
                  rd_kafka_op_res_t res;
-@@ -3989,6 +4086,10 @@ rd_kafka_op_res_t rd_kafka_poll_cb(rd_kafka_t *rk,
+@@ -3999,6 +4096,10 @@ rd_kafka_op_res_t rd_kafka_poll_cb(rd_kafka_t *rk,
                          }
  
                          rd_kafka_msg_destroy(rk, rkm);
@@ -232,7 +250,7 @@ index 429525a8..4a7d5078 100644
  
                          if (unlikely(rd_kafka_yield_thread)) {
                                  /* Callback called yield(),
-@@ -4417,8 +4518,14 @@ rd_kafka_resp_err_t rd_kafka_flush(rd_kafka_t *rk, int timeout_ms) {
+@@ -4440,8 +4541,14 @@ rd_kafka_resp_err_t rd_kafka_flush(rd_kafka_t *rk, int timeout_ms) {
  
          if (rk->rk_type != RD_KAFKA_PRODUCER)
                  return RD_KAFKA_RESP_ERR__NOT_IMPLEMENTED;
@@ -248,7 +266,7 @@ index 429525a8..4a7d5078 100644
  
          /* Set flushing flag on the producer for the duration of the
           * flush() call. This tells producer_serve() that the linger.ms
-@@ -4570,9 +4677,22 @@ rd_kafka_resp_err_t rd_kafka_purge(rd_kafka_t *rk, int purge_flags) {
+@@ -4593,9 +4700,22 @@ rd_kafka_resp_err_t rd_kafka_purge(rd_kafka_t *rk, int purge_flags) {
  const char *rd_kafka_purge_flags2str(int flags) {
          static const char *names[] = {"queue", "inflight", "non-blocking",
                                        NULL};
@@ -271,7 +289,7 @@ index 429525a8..4a7d5078 100644
  }
  
  
-@@ -4581,7 +4701,15 @@ int rd_kafka_version(void) {
+@@ -4604,7 +4724,15 @@ int rd_kafka_version(void) {
  }
  
  const char *rd_kafka_version_str(void) {
@@ -287,7 +305,7 @@ index 429525a8..4a7d5078 100644
          size_t of = 0, r;
  
          if (*ret)
-@@ -4589,15 +4717,33 @@ const char *rd_kafka_version_str(void) {
+@@ -4612,15 +4740,33 @@ const char *rd_kafka_version_str(void) {
  
  #ifdef LIBRDKAFKA_GIT_VERSION
          if (*LIBRDKAFKA_GIT_VERSION) {
@@ -321,7 +339,7 @@ index 429525a8..4a7d5078 100644
  #define _my_sprintf(...)                                                       \
          do {                                                                   \
                  r = rd_snprintf(ret + of, sizeof(ret) - of, __VA_ARGS__);      \
-@@ -4605,6 +4751,7 @@ const char *rd_kafka_version_str(void) {
+@@ -4628,6 +4774,7 @@ const char *rd_kafka_version_str(void) {
                          r = sizeof(ret) - of;                                  \
                  of += r;                                                       \
          } while (0)
@@ -329,7 +347,7 @@ index 429525a8..4a7d5078 100644
  
          if (of == 0) {
                  int ver  = rd_kafka_version();
-@@ -5065,7 +5212,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -5088,7 +5235,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
  #else
          DIR *dir;
          struct dirent *d;
@@ -338,7 +356,7 @@ index 429525a8..4a7d5078 100644
          struct stat st;
          int ret = 0;
  #endif
-@@ -5079,7 +5226,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
+@@ -5102,7 +5249,7 @@ rd_bool_t rd_kafka_dir_is_empty(const char *path) {
                  if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
                          continue;
  

@@ -1,5 +1,5 @@
 diff --git a/src/rdposix.h b/src/rdposix.h
-index 0af59481..68651dde 100644
+index 0af59481..29b0c214 100644
 --- a/src/rdposix.h
 +++ b/src/rdposix.h
 @@ -60,12 +60,15 @@
@@ -20,18 +20,25 @@ index 0af59481..68651dde 100644
  /* alloca(3) is in stdlib on FreeBSD */
  #include <alloca.h>
  #endif
-@@ -136,7 +139,9 @@ static RD_INLINE RD_UNUSED const char *rd_strerror(int err) {
+@@ -136,20 +139,23 @@ static RD_INLINE RD_UNUSED const char *rd_strerror(int err) {
  /**
   * Misc
   */
 -
 +#ifdef __MVS__
-+#define rd_usleep(usec, terminate) sleep((usec) / 1000)
++#define rd_usleep(usec, terminate) sleep((usec) / 1000000)
 +#else
  /**
   * Microsecond sleep.
   * Will retry on signal interrupt unless *terminate is true.
-@@ -149,7 +154,7 @@ static RD_INLINE RD_UNUSED void rd_usleep(int usec, rd_atomic32_t *terminate) {
+  */
+ static RD_INLINE RD_UNUSED void rd_usleep(int usec, rd_atomic32_t *terminate) {
+         struct timespec req = {usec / 1000000, (long)(usec % 1000000) * 1000};
+-
++	
++	
+         /* Retry until complete (issue #272), unless terminating. */
+         while (nanosleep(&req, &req) == -1 &&
                 (errno == EINTR && (!terminate || !rd_atomic32_get(terminate))))
                  ;
  }
