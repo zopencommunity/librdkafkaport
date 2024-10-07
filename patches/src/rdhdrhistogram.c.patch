@@ -1,0 +1,25 @@
+diff --git a/src/rdhdrhistogram.c b/src/rdhdrhistogram.c
+index 08240ac7..621e2311 100644
+--- a/src/rdhdrhistogram.c
++++ b/src/rdhdrhistogram.c
+@@ -104,12 +104,18 @@ rd_hdr_histogram_t *rd_hdr_histogram_new(int64_t minValue,
+         largestValueWithSingleUnitResolution =
+             (int64_t)(2.0 * pow(10.0, (double)significantFigures));
+ 
+-        subBucketCountMagnitude =
++        if (largestValueWithSingleUnitResolution <= 0)
++          subBucketCountMagnitude = 0;
++        else
++          subBucketCountMagnitude =
+             (int32_t)ceil(log2((double)largestValueWithSingleUnitResolution));
+ 
+         subBucketHalfCountMagnitude = RD_MAX(subBucketCountMagnitude, 1) - 1;
+ 
+-        unitMagnitude = (int32_t)RD_MAX(floor(log2((double)minValue)), 0);
++        if (minValue <= 0)
++          unitMagnitude = 0;
++        else
++          unitMagnitude = (int32_t)RD_MAX(floor(log2((double)minValue)), 0);
+ 
+         subBucketCount =
+             (int32_t)pow(2, (double)subBucketHalfCountMagnitude + 1.0);
