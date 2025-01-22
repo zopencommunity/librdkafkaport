@@ -1,0 +1,18 @@
+diff --git a/examples/list_offsets.c b/examples/list_offsets.c
+index f84c11c1..81e1e61e 100644
+--- a/examples/list_offsets.c
++++ b/examples/list_offsets.c
+@@ -37,11 +37,13 @@
+ #include <stdlib.h>
+ #include <stdarg.h>
+ 
++#ifndef __MVS__
+ #ifdef _WIN32
+ #include "../win32/wingetopt.h"
+ #else
+ #include <getopt.h>
+ #endif
++#endif
+ 
+ 
+ /* Typical include path would be <librdkafka/rdkafka.h>, but this program

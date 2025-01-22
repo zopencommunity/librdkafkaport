@@ -8,7 +8,9 @@ export ZOPEN_TYPE="GIT"
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
 
-export ZOPEN_EXTRA_CFLAGS="-Wno-error -mzos-target=zosv2r4 -I../src"
+export ZOPEN_EXTRA_CFLAGS="-Werror -mzos-target=zosv2r4 -I../src"
+export ZOPEN_EXTRA_CXXFLAGS="-Werror"
+export ZOPEN_EXTRA_LDFLAGS="-m64"
 
 export ZOPEN_EXTRA_CPPFLAGS="-D_OPEN_SYS_SOCK_IPV6 -D_UNIX03_SOURCE -D_UNIX03_THREADS -D_XOPEN_SOURCE_EXTENDED=1 -D_POSIX_C_SOURCE=200112L -D_POSIX_SOURCE -DPOSIX_SIGNALS -mzos-target=zosv2r4 -I../src-cpp"
 

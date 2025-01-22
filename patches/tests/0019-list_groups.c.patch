@@ -1,0 +1,13 @@
+diff --git a/tests/0019-list_groups.c b/tests/0019-list_groups.c
+index 3337e347..a991f586 100644
+--- a/tests/0019-list_groups.c
++++ b/tests/0019-list_groups.c
+@@ -127,7 +127,7 @@ list_groups(rd_kafka_t *rk, char **groups, int group_cnt, const char *desc) {
+                 if (err) {
+                         TEST_SAY("Failed to list group %s: %s\n", groups[i],
+                                  rd_kafka_err2str(err));
+-                        fails++;
++                        fails = fails + 1;
+                         continue;
+                 }
+ 

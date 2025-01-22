@@ -1,5 +1,5 @@
 diff --git a/src/rdhttp.c b/src/rdhttp.c
-index cea2d1c9..17d88e99 100644
+index cea2d1c9..b98555b1 100644
 --- a/src/rdhttp.c
 +++ b/src/rdhttp.c
 @@ -43,6 +43,36 @@
@@ -39,6 +39,15 @@ index cea2d1c9..17d88e99 100644
  
  void rd_http_error_destroy(rd_http_error_t *herr) {
          rd_free(herr);
+@@ -139,7 +169,7 @@ rd_http_error_t *rd_http_req_init(rd_http_req_t *hreq, const char *url) {
+         hreq->hreq_buf = rd_buf_new(1, 1024);
+ 
+         curl_easy_setopt(hreq->hreq_curl, CURLOPT_URL, url);
+-        curl_easy_setopt(hreq->hreq_curl, CURLOPT_PROTOCOLS,
++        curl_easy_setopt(hreq->hreq_curl, CURLOPT_PROTOCOLS_STR,
+                          CURLPROTO_HTTP | CURLPROTO_HTTPS);
+         curl_easy_setopt(hreq->hreq_curl, CURLOPT_MAXREDIRS, 16);
+         curl_easy_setopt(hreq->hreq_curl, CURLOPT_TIMEOUT, 30);
 @@ -320,6 +350,30 @@ rd_http_error_t *rd_http_post_expect_json(rd_kafka_t *rk,
                           post_fields_size);
          curl_easy_setopt(hreq.hreq_curl, CURLOPT_POSTFIELDS, post_fields);
