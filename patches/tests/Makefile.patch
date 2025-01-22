@@ -1,0 +1,13 @@
+diff --git a/tests/Makefile b/tests/Makefile
+index 543639e4..49ca2d75 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -9,7 +9,7 @@ OBJS	 += test.o rusage.o testcpp.o \
+ 		sockem_ctrl.o
+ CFLAGS += -I../src
+ CXXFLAGS += -I../src -I../src-cpp
+-LDFLAGS += -rdynamic -L../src -L../src-cpp
++LDFLAGS += -L../src -L../src-cpp
+ 
+ # Latest Kafka version
+ KAFKA_VERSION?=3.4.0

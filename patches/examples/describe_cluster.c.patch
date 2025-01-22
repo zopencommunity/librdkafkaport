@@ -1,0 +1,18 @@
+diff --git a/examples/describe_cluster.c b/examples/describe_cluster.c
+index c37da17f..b0bf566a 100644
+--- a/examples/describe_cluster.c
++++ b/examples/describe_cluster.c
+@@ -36,11 +36,13 @@
+ #include <stdlib.h>
+ #include <stdarg.h>
+ 
++#ifndef __MVS__
+ #ifdef _WIN32
+ #include "../win32/wingetopt.h"
+ #else
+ #include <getopt.h>
+ #endif
++#endif
+ 
+ 
+ /* Typical include path would be <librdkafka/rdkafka.h>, but this program

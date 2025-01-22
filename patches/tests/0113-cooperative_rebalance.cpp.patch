@@ -1,0 +1,17 @@
+diff --git a/tests/0113-cooperative_rebalance.cpp b/tests/0113-cooperative_rebalance.cpp
+index e94b1b78..85eea594 100644
+--- a/tests/0113-cooperative_rebalance.cpp
++++ b/tests/0113-cooperative_rebalance.cpp
+@@ -26,11 +26,11 @@
+  * POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
++#include <iostream>
+ extern "C" {
+ #include "../src/rdkafka_protocol.h"
+ #include "test.h"
+ }
+-#include <iostream>
+ #include <map>
+ #include <set>
+ #include <algorithm>
