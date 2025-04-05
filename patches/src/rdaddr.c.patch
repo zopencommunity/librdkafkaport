@@ -1,5 +1,5 @@
 diff --git a/src/rdaddr.c b/src/rdaddr.c
-index 6fb2c66c..6b2306b0 100644
+index 6fb2c66c..44705a70 100644
 --- a/src/rdaddr.c
 +++ b/src/rdaddr.c
 @@ -32,19 +32,38 @@
@@ -66,7 +66,7 @@ index 6fb2c66c..6b2306b0 100644
  
                           (flags & RD_SOCKADDR2STR_F_PORT) ? portstr : NULL,
  
-@@ -87,10 +113,15 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+@@ -87,29 +113,54 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
                  if (flags & RD_SOCKADDR2STR_F_PORT) {
                          size_t len = strlen(ret[reti]);
                          rd_snprintf(
@@ -82,7 +82,20 @@ index 6fb2c66c..6b2306b0 100644
                  return ret[reti];
          }
  
-@@ -104,12 +135,27 @@ const char *rd_sockaddr2str(const void *addr, int flags) {
+ 
+         /* Error-case */
+-        rd_snprintf(ret[reti], sizeof(ret[reti]), "<unsupported:%s>",
+-                    rd_family2str(a->sinx_family));
++        rd_snprintf(
++#ifdef __MVS__
++                ret[reti], size_of_ret,
++#else                
++                ret[reti], sizeof(ret[reti]),
++#endif                
++                "<unsupported:%s>", rd_family2str(a->sinx_family));
+ 
+         return ret[reti];
+ }
  
  
  const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
@@ -111,7 +124,7 @@ index 6fb2c66c..6b2306b0 100644
          *snode = '\0';
          *ssvc  = '\0';
  
-@@ -141,7 +187,11 @@ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
+@@ -141,7 +192,11 @@ const char *rd_addrinfo_prepare(const char *nodesvc, char **node, char **svc) {
  
          if (nodelen) {
                  /* Truncate nodename if necessary. */

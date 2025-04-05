@@ -1,0 +1,13 @@
+diff --git a/tests/0085-headers.cpp b/tests/0085-headers.cpp
+index aa9c4246..5aff8b75 100644
+--- a/tests/0085-headers.cpp
++++ b/tests/0085-headers.cpp
+@@ -98,7 +98,7 @@ static void test_headers(RdKafka::Headers *produce_headers,
+     RdKafka::Message *msg = consumer->consume(10 * 1000);
+ 
+     if (msg->err() == RdKafka::ERR_NO_ERROR) {
+-      cnt++;
++      cnt = cnt + 1;
+       RdKafka::Headers *headers = msg->headers();
+       if (compare_headers->size() > 0) {
+         assert_all_headers_match(headers, compare_headers);

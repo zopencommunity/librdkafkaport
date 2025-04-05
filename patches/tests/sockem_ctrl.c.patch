@@ -1,0 +1,57 @@
+diff --git a/tests/sockem_ctrl.c b/tests/sockem_ctrl.c
+index 4396d273..21dfb6f2 100644
+--- a/tests/sockem_ctrl.c
++++ b/tests/sockem_ctrl.c
+@@ -34,6 +34,52 @@
+ 
+ #include "test.h"
+ #include "sockem.h"
++
++/** Avoid compilation warning due to -Wmacro-redefined flag: 
++ * Undefine macros already defined in librdkafka/src/queue.h */
++#undef SLIST_FOREACH
++#undef SLIST_FOREACH_SAFE
++#undef SLIST_INIT
++#undef SLIST_INSERT_AFTER
++#undef SLIST_INSERT_HEAD
++#undef SLIST_REMOVE
++#undef SLIST_REMOVE_AFTER
++#undef SLIST_REMOVE_HEAD
++#undef STAILQ_CONCAT
++#undef STAILQ_EMPTY
++#undef STAILQ_FOREACH
++#undef STAILQ_INIT
++#undef STAILQ_INSERT_AFTER
++#undef STAILQ_INSERT_HEAD
++#undef STAILQ_INSERT_TAIL
++#undef STAILQ_LAST
++#undef STAILQ_REMOVE
++#undef STAILQ_REMOVE_HEAD
++#undef LIST_EMPTY
++#undef LIST_FOREACH
++#undef LIST_FOREACH_SAFE
++#undef LIST_INIT
++#undef LIST_INSERT_AFTER
++#undef LIST_INSERT_BEFORE
++#undef LIST_INSERT_HEAD
++#undef LIST_REMOVE
++#undef TAILQ_HEAD
++#undef TAILQ_HEAD_INITIALIZER
++#undef TAILQ_ENTRY
++#undef TAILQ_CONCAT
++#undef TAILQ_EMPTY
++#undef TAILQ_FOREACH
++#undef TAILQ_FOREACH_SAFE
++#undef TAILQ_FOREACH_REVERSE
++#undef TAILQ_FOREACH_REVERSE_SAFE
++#undef TAILQ_INIT
++#undef TAILQ_INSERT_AFTER
++#undef TAILQ_INSERT_HEAD
++#undef TAILQ_INSERT_TAIL
++#undef TAILQ_REMOVE
++#undef TAILQ_END
++#undef TAILQ_INSERT_BEFORE
++
+ #include "sockem_ctrl.h"
+ 
+ static int sockem_ctrl_thrd_main(void *arg) {
