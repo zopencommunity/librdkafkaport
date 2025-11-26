@@ -1,0 +1,51 @@
+diff --git a/src/rdkafka_feature.c b/src/rdkafka_feature.c
+index b32cdf68..c8d22d69 100644
+--- a/src/rdkafka_feature.c
++++ b/src/rdkafka_feature.c
+@@ -433,11 +433,23 @@ void rd_kafka_ApiVersions_copy(const struct rd_kafka_ApiVersion *src,
+  * @returns a human-readable feature flag string.
+  */
+ const char *rd_kafka_features2str(int features) {
++#ifdef __MVS__
++        static tls_t tls_ret;
++        static tls_t tls_reti;
++        char **ret = NULL;
++        int *reti_p = NULL;
++        size_t size_of_ret = 256;
++        tls_ret.sz = sizeof(char);
++        tls_reti.sz = sizeof(int);
++        ret = __tlsArray(&tls_ret,4,256);
++        reti_p = __tlsValue(&tls_reti);
++#define reti (*reti_p)
++#else
+         static RD_TLS char ret[4][256];
+-        size_t of              = 0;
+         static RD_TLS int reti = 0;
++#endif
+         int i;
+-
++        size_t of              = 0;
+         reti = (reti + 1) % 4;
+ 
+         *ret[reti] = '\0';
+@@ -445,12 +457,19 @@ const char *rd_kafka_features2str(int features) {
+                 int r;
+                 if (!(features & (1 << i)))
+                         continue;
+-
++#ifdef __MVS__
++                r = rd_snprintf(ret[reti] + of, size_of_ret - of, "%s%s",
++                                of == 0 ? "" : ",", rd_kafka_feature_names[i]);
++                if ((size_t)r > size_of_ret - of) {
++                        /* Out of space */
++                        memcpy(&ret[reti][size_of_ret - 3], "..", 3);
++#else
+                 r = rd_snprintf(ret[reti] + of, sizeof(ret[reti]) - of, "%s%s",
+                                 of == 0 ? "" : ",", rd_kafka_feature_names[i]);
+                 if ((size_t)r > sizeof(ret[reti]) - of) {
+                         /* Out of space */
+                         memcpy(&ret[reti][sizeof(ret[reti]) - 3], "..", 3);
++#endif
+                         break;
+                 }
+ 

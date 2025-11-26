@@ -1,0 +1,16 @@
+diff --git a/src/rdkafka.h b/src/rdkafka.h
+index e403b895..2ed8d60a 100644
+--- a/src/rdkafka.h
++++ b/src/rdkafka.h
+@@ -89,7 +89,11 @@ typedef SSIZE_T ssize_t;
+ 
+ #define RD_UNUSED __attribute__((unused))
+ #define RD_INLINE inline
++#ifdef __MVS__
++#define RD_EXPORT __attribute__((visibility("default")))
++#else
+ #define RD_EXPORT
++#endif
+ #define RD_DEPRECATED __attribute__((deprecated))
+ 
+ #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)

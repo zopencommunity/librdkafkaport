@@ -1,8 +1,30 @@
 diff --git a/src/rdrand.c b/src/rdrand.c
-index bdab0029..eaaf7c0e 100644
+index bdab0029..1d5d5dd8 100644
 --- a/src/rdrand.c
 +++ b/src/rdrand.c
-@@ -41,7 +41,11 @@ int rd_jitter(int low, int high) {
+@@ -30,18 +30,33 @@
+ #include "rdrand.h"
+ #include "rdtime.h"
+ #include "tinycthread.h"
++#ifdef __MVS__
++#include <zos-tls.h>
++#endif
+ 
+ int rd_jitter(int low, int high) {
+         int rand_num;
+ #if HAVE_RAND_R
++#ifdef __MVS__
++	static tls_t tls_seed;
++	unsigned int *seed_p = NULL;
++	tls_seed.sz = sizeof(unsigned int);
++	seed_p = (unsigned int *)__tlsValue(&tls_seed);
++#define seed (*seed_p)
++#else
+         static RD_TLS unsigned int seed = 0;
++#endif
+ 
+         /* Initial seed with time+thread id */
+         if (unlikely(seed == 0)) {
                  struct timeval tv;
                  rd_gettimeofday(&tv, NULL);
                  seed = (unsigned int)(tv.tv_usec / 1000);

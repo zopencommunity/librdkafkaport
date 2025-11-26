@@ -1,8 +1,24 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..4f351096 100644
+index b0ec8e95..2edefa54 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
-@@ -608,13 +608,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
+@@ -54,8 +54,14 @@ freely, subject to the following restrictions:
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+-
++#ifdef __MVS__
++#include <zos-tls.h>
++int *thrd_is_detached_p = NULL;
++tls_t tls_thrd_is_detached;
++#define thrd_is_detached (*thrd_is_detached_p)
++#else
+ static RD_TLS int thrd_is_detached;
++#endif
+ 
+ 
+ int mtx_init(mtx_t *mtx, int type)
+@@ -608,13 +614,21 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
            if((err = pthread_create(thr, NULL, _thrd_wrapper_function,
                                     (void *)ti)) != 0) {
                    errno = err;
@@ -24,3 +40,27 @@ index b0ec8e95..4f351096 100644
    {
      rd_free(ti);
      return thrd_error;
+@@ -634,7 +648,14 @@ thrd_t thrd_current(void)
+ 
+ int thrd_detach(thrd_t thr)
+ {
++#ifdef __MVS__
++	tls_thrd_is_detached.sz = sizeof(int);
++	thrd_is_detached_p = __tlsValue(&tls_thrd_is_detached);
++	*thrd_is_detached_p = 1;
++#else
+   thrd_is_detached = 1;
++#endif
++
+ #if defined(_TTHREAD_WIN32_)
+   /* https://stackoverflow.com/questions/12744324/how-to-detach-a-thread-on-windows-c#answer-12746081 */
+   return CloseHandle(thr) != 0 ? thrd_success : thrd_error;
+@@ -890,7 +911,7 @@ int _tthread_timespec_get(struct timespec *ts, int base)
+ #endif /* _TTHREAD_EMULATE_TIMESPEC_GET_ */
+ 
+ #if defined(_TTHREAD_WIN32_)
+-void call_once(once_flag *flag, void (*func)(void))
++void rd_call_once(once_flag *flag, void (*func)(void))
+ {
+   /* The idea here is that we use a spin lock (via the
+      InterlockedCompareExchange function) to restrict access to the

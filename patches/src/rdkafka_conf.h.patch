@@ -1,0 +1,28 @@
+diff --git a/src/rdkafka_conf.h b/src/rdkafka_conf.h
+index 5c415130..adf60e91 100644
+--- a/src/rdkafka_conf.h
++++ b/src/rdkafka_conf.h
+@@ -154,6 +154,11 @@ typedef enum {
+         RD_KAFKA_SASL_OAUTHBEARER_METHOD_OIDC
+ } rd_kafka_oauthbearer_method_t;
+ 
++typedef enum {
++        RD_KAFKA_SASL_OAUTHBEARER_CLIENT_CREDENTIALS,
++        RD_KAFKA_SASL_OAUTHBEARER_PASSWORD
++} rd_kafka_oauthbearer_grant_type_t;
++
+ typedef enum {
+         RD_KAFKA_SSL_ENDPOINT_ID_NONE,
+         RD_KAFKA_SSL_ENDPOINT_ID_HTTPS, /**< RFC2818 */
+@@ -319,6 +324,11 @@ struct rd_kafka_conf_s {
+                         void (*token_refresh_cb)(rd_kafka_t *rk,
+                                                  const char *oauthbearer_config,
+                                                  void *opaque);
++                	rd_kafka_oauthbearer_grant_type_t grant_type;
++                        char *user_name;
++                        char *user_password;
++	                char *curl_opts;
++                        char *principal_name;
+                 } oauthbearer;
+         } sasl;
+ 

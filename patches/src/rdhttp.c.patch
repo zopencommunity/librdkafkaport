@@ -1,0 +1,77 @@
+diff --git a/src/rdhttp.c b/src/rdhttp.c
+index cea2d1c9..17d88e99 100644
+--- a/src/rdhttp.c
++++ b/src/rdhttp.c
+@@ -43,6 +43,36 @@
+ /** Maximum response size, increase as necessary. */
+ #define RD_HTTP_RESPONSE_SIZE_MAX 1024 * 1024 * 500 /* 500kb */
+ 
++// Define a structure for string-to-constant mappings
++typedef struct {
++    const char *name;
++    CURLoption option;
++} CurlOptionMap;
++
++static const CurlOptionMap curl_option_map[] = {
++    {"CURLOPT_SSLCERT", CURLOPT_SSLCERT},
++    {"CURLOPT_SSLCERTPASSWD", CURLOPT_SSLCERTPASSWD},
++    {"CURLOPT_SSLKEYPASSWD", CURLOPT_SSLKEYPASSWD},
++    {"CURLOPT_SSLVERSION", CURLOPT_SSLVERSION},
++    {"CURLOPT_VERBOSE", CURLOPT_VERBOSE},
++    {"CURLOPT_SSL_VERIFYPEER", CURLOPT_SSL_VERIFYPEER},
++    {"CURLOPT_CAINFO", CURLOPT_CAINFO},
++    {"CURLOPT_SSL_VERIFYHOST", CURLOPT_SSL_VERIFYHOST},
++    {"CURLOPT_SSL_CIPHER_LIST", CURLOPT_SSL_CIPHER_LIST},
++    {"CURLOPT_SSLCERTTYPE", CURLOPT_SSLCERTTYPE},
++    {"CURLOPT_SSLKEY", CURLOPT_SSLKEY},
++    {"CURLOPT_SSLKEYTYPE", CURLOPT_SSLKEYTYPE},
++};
++
++// Function to get the CURLoption value given a string representation
++CURLoption string_to_curl_option(const char *str) {
++    for (size_t i = 0; i < sizeof(curl_option_map) / sizeof(curl_option_map[0]); ++i) {
++        if (strcmp(curl_option_map[i].name, str) == 0) {
++            return curl_option_map[i].option;
++        }
++    }
++    return (CURLoption)-1;
++}
+ 
+ void rd_http_error_destroy(rd_http_error_t *herr) {
+         rd_free(herr);
+@@ -320,6 +350,30 @@ rd_http_error_t *rd_http_post_expect_json(rd_kafka_t *rk,
+                          post_fields_size);
+         curl_easy_setopt(hreq.hreq_curl, CURLOPT_POSTFIELDS, post_fields);
+ 
++        char *options = strdup(rk->rk_conf.sasl.oauthbearer.curl_opts);
++        if (options) {
++                char *token = strtok(options, ",");
++                while (token != NULL) {
++                        char *equal_sign = strchr(token, '=');
++                        if (equal_sign) {
++                        *equal_sign = '\0'; 
++                        const char *key = token;
++                        const char *value = equal_sign + 1;
++
++                        CURLoption opt = string_to_curl_option(key);
++                        if (opt != (CURLoption)-1) {
++                                curl_easy_setopt(hreq.hreq_curl, opt, value);
++                        } else {
++                                return rd_http_error_new(-1, "Unknown option: %s\n", key);
++                        }
++                        } else {
++                                return rd_http_error_new(-1, "Invalid format: %s\n", token);
++                        }
++                        token = strtok(NULL, ",");
++                }
++                free(options);
++        }
++
+         for (i = 0; i <= retries; i++) {
+                 if (rd_kafka_terminating(rk)) {
+                         rd_http_req_destroy(&hreq);
+@@ -509,3 +563,4 @@ int unittest_http(void) {
+ 
+         RD_UT_PASS();
+ }
++

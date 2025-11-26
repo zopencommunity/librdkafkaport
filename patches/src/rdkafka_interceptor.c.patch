@@ -1,0 +1,34 @@
+diff --git a/src/rdkafka_interceptor.c b/src/rdkafka_interceptor.c
+index b5bacece..42fdaa7d 100644
+--- a/src/rdkafka_interceptor.c
++++ b/src/rdkafka_interceptor.c
+@@ -594,6 +594,14 @@ void rd_kafka_interceptors_on_thread_start(rd_kafka_t *rk,
+                                            rd_kafka_thread_type_t thread_type) {
+         rd_kafka_interceptor_method_t *method;
+         int i;
++#ifdef __MVS__
++        tls_rd_kafka_thread_name.sz = size_of_rd_kafka_thread_name*sizeof(char);
++        rd_kafka_thread_name = __tlsValue(&tls_rd_kafka_thread_name);
++        if(rd_kafka_thread_name[0]==0)
++        {
++        	strncpy(rd_kafka_thread_name,"app",3);
++        }
++#endif
+ 
+         RD_LIST_FOREACH(method, &rk->rk_conf.interceptors.on_thread_start, i) {
+                 rd_kafka_resp_err_t ic_err;
+@@ -611,6 +619,14 @@ void rd_kafka_interceptors_on_thread_exit(rd_kafka_t *rk,
+                                           rd_kafka_thread_type_t thread_type) {
+         rd_kafka_interceptor_method_t *method;
+         int i;
++#ifdef __MVS__
++        tls_rd_kafka_thread_name.sz = size_of_rd_kafka_thread_name*sizeof(char);
++        rd_kafka_thread_name = __tlsValue(&tls_rd_kafka_thread_name);
++	if(rd_kafka_thread_name[0]==0)
++	{
++		strcpy(rd_kafka_thread_name,"app");
++	}
++#endif
+ 
+         RD_LIST_FOREACH(method, &rk->rk_conf.interceptors.on_thread_exit, i) {
+                 rd_kafka_resp_err_t ic_err;

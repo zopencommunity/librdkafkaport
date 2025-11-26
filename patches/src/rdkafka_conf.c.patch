@@ -1,8 +1,189 @@
 diff --git a/src/rdkafka_conf.c b/src/rdkafka_conf.c
-index 9200af4c..342f3a7c 100644
+index 84262d56..ab14fcd1 100644
 --- a/src/rdkafka_conf.c
 +++ b/src/rdkafka_conf.c
-@@ -2228,7 +2228,6 @@ static int rd_kafka_anyconf_set(int scope,
+@@ -56,6 +56,24 @@
+ #include <windows.h>
+ #endif
+ 
++#define ALLOWED_CURL_OPTS_COUNT 12
++
++static const char *allowed_curl_opts[ALLOWED_CURL_OPTS_COUNT] = {
++    "CURLOPT_SSLCERT",
++    "CURLOPT_SSLCERTPASSWD",
++    "CURLOPT_SSLKEYPASSWD",
++    "CURLOPT_SSLVERSION",
++    "CURLOPT_VERBOSE",
++    "CURLOPT_SSL_VERIFYPEER",
++    "CURLOPT_CAINFO",
++    "CURLOPT_SSL_VERIFYHOST",
++    "CURLOPT_SSL_CIPHER_LIST",
++    "CURLOPT_SSLCERTTYPE",
++    "CURLOPT_SSLKEY",
++    "CURLOPT_SSLKEYTYPE"
++};
++
++
+ struct rd_kafka_property {
+         rd_kafka_conf_scope_t scope;
+         const char *name;
+@@ -316,6 +334,67 @@ rd_kafka_conf_validate_broker_version(const struct rd_kafka_property *prop,
+         return rd_kafka_get_legacy_ApiVersions(val, &apis, &api_cnt, NULL);
+ }
+ 
++/* Function to check if a value is in the allowed_curl_opts array */
++static int is_valid_curl_opt(const char *opt) {
++    for (int i = 0; i < ALLOWED_CURL_OPTS_COUNT; ++i) {
++        if (strcmp(opt, allowed_curl_opts[i]) == 0) {
++            return 1;
++        }
++    }
++    return 0;
++}
++
++static RD_UNUSED int
++rd_kafka_conf_validate_curl_opts(const struct rd_kafka_property *prop,
++                              const char *val,
++                              int ival) {
++    char *opts, *token, *saveptr;
++    int valid = 1; 
++
++    if (val == NULL || *val == '\0') {
++        return 0; 
++    }
++
++    opts = strdup(val);
++    if (opts == NULL) {
++        return 0; 
++    }
++
++    token = strtok_r(opts, ",", &saveptr);
++    while (token) {
++        char *equal_sign = strchr(token, '=');
++        if (equal_sign == NULL) {
++            valid = 0; 
++            break;
++        }
++
++        *equal_sign = '\0'; 
++        char *opt = token;
++        char *value = equal_sign + 1;
++
++        if (!is_valid_curl_opt(opt)) {
++            valid = 0; 
++            break;
++        }
++
++        // Validate the value part
++        for (char *p = value; *p; p++) {
++            if (*p == ',' || isspace((unsigned char)*p)) {
++                valid = 0; 
++                break;
++            }
++        }
++
++        if (!valid) break;
++
++        token = strtok_r(NULL, ",", &saveptr);
++    }
++
++    free(opts);
++    return valid;
++}
++
++
+ /**
+  * @brief Validate that string is a single item, without delimters (, space).
+  */
+@@ -1004,32 +1083,61 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
+      _RK(sasl.oauthbearer.method),
+      "Set to \"default\" or \"oidc\" to control which login method "
+      "to be used. If set to \"oidc\", the following properties must also be "
+-     "be specified: "
++     "specified: "
+      "`sasl.oauthbearer.client.id`, `sasl.oauthbearer.client.secret`, "
+      "and `sasl.oauthbearer.token.endpoint.url`.",
+      .vdef = RD_KAFKA_SASL_OAUTHBEARER_METHOD_DEFAULT,
+      .s2i  = {{RD_KAFKA_SASL_OAUTHBEARER_METHOD_DEFAULT, "default"},
+              {RD_KAFKA_SASL_OAUTHBEARER_METHOD_OIDC, "oidc"}},
+      _UNSUPPORTED_OIDC},
++    {_RK_GLOBAL, "sasl.oauthbearer.grant_type", _RK_C_S2I,
++     _RK(sasl.oauthbearer.grant_type),
++     "Set to \"client_credentials\" or \"password\" to set the grant type method "
++     "to be used for oauth. If set to \"client_credentials\", the following properties "
++     "must also be specified: "
++     "`sasl.oauthbearer.client.id`, `sasl.oauthbearer.client.secret`, "
++     "and `sasl.oauthbearer.token.endpoint.url`. If set to \"password\", the following "
++     "properoties must also be specified: "
++     "`sasl.oauthbearer.client.id`, `sasl.oauthbearer.user.name, "
++     "`sasl.oauthbearer.user.password`.",
++     .vdef = RD_KAFKA_SASL_OAUTHBEARER_CLIENT_CREDENTIALS,
++     .s2i  = {{RD_KAFKA_SASL_OAUTHBEARER_CLIENT_CREDENTIALS, "client_credentials"},
++             {RD_KAFKA_SASL_OAUTHBEARER_PASSWORD, "password"}},
++     _UNSUPPORTED_OIDC},
++    {_RK_GLOBAL, "sasl.oauthbearer.user.name", _RK_C_STR,
++     _RK(sasl.oauthbearer.user_name),
++     "The resource owner's name."
++     "Only used when `sasl.oauthbearer.method` is set to \"oidc\" and"
++     "sasl.oauthbearer.grant_type is set to \"password\".",
++     _UNSUPPORTED_OIDC},
++    {_RK_GLOBAL, "sasl.oauthbearer.user.password", _RK_C_STR,
++     _RK(sasl.oauthbearer.user_password),
++     "The resource owner's password."
++     "Only used when `sasl.oauthbearer.method` is set to \"oidc\" and"
++     "sasl.oauthbearer.grant_type is set to \"password\".",
++     _UNSUPPORTED_OIDC},
+     {_RK_GLOBAL, "sasl.oauthbearer.client.id", _RK_C_STR,
+      _RK(sasl.oauthbearer.client_id),
+      "Public identifier for the application. "
+      "Must be unique across all clients that the "
+      "authorization server handles. "
+-     "Only used when `sasl.oauthbearer.method` is set to \"oidc\".",
++     "Only used when `sasl.oauthbearer.method` is set to \"oidc\" and"
++     "sasl.oauthbearer.grant_type is set to \"password\" or \"client_credentials\".",
+      _UNSUPPORTED_OIDC},
+     {_RK_GLOBAL, "sasl.oauthbearer.client.secret", _RK_C_STR,
+      _RK(sasl.oauthbearer.client_secret),
+      "Client secret only known to the application and the "
+      "authorization server. This should be a sufficiently random string "
+      "that is not guessable. "
+-     "Only used when `sasl.oauthbearer.method` is set to \"oidc\".",
++     "Only used	when `sasl.oauthbearer.method` is set to \"oidc\" and"
++     "sasl.oauthbearer.grant_type is set to \"client_credentials\".",
+      _UNSUPPORTED_OIDC},
+     {_RK_GLOBAL, "sasl.oauthbearer.scope", _RK_C_STR,
+      _RK(sasl.oauthbearer.scope),
+      "Client use this to specify the scope of the access request to the "
+      "broker. "
+-     "Only used when `sasl.oauthbearer.method` is set to \"oidc\".",
++     "Only used	when `sasl.oauthbearer.method` is set to \"oidc\" and"
++     "sasl.oauthbearer.grant_type is set to \"password\" or \"client_credentials\".",
+      _UNSUPPORTED_OIDC},
+     {_RK_GLOBAL, "sasl.oauthbearer.extensions", _RK_C_STR,
+      _RK(sasl.oauthbearer.extensions_str),
+@@ -1043,7 +1151,20 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
+      "OAuth/OIDC issuer token endpoint HTTP(S) URI used to retrieve token. "
+      "Only used when `sasl.oauthbearer.method` is set to \"oidc\".",
+      _UNSUPPORTED_OIDC},
+-
++    {_RK_GLOBAL, "sasl.oauthbearer.curl.opts", _RK_C_STR,
++     _RK(sasl.oauthbearer.curl_opts),
++     "Comma separated list of curl opts. "
++     "Only these are curl options are supported: CURLOPT_SSLCERT, CURLOPT_SSLCERTPASSWD,"
++     " CURLOPT_SSLKEYPASSWD, CURLOPT_SSLVERSION, CURLOPT_VERBOSE, CURLOPT_SSL_VERIFYPEER,"
++     " CURLOPT_CAINFO, CURLOPT_SSL_VERIFYHOST, CURLOPT_SSL_CIPHER_LIST, CURLOPT_SSLCERTTYPE,"
++     " CURLOPT_SSLKEY, CURLOPT_SSLKEYTYPE."
++     "Only used when `sasl.oauthbearer.method` is set to \"oidc\".",
++     .sdef = "", .validate = rd_kafka_conf_validate_curl_opts},
++     {_RK_GLOBAL, "sasl.oauthbearer.principal.name", _RK_C_STR, 
++     _RK(sasl.oauthbearer.principal_name),
++     "Set this to a claim name that identifies the principal in JWT. "
++     "Default is set to \"sub\".", .sdef = "sub",
++     _UNSUPPORTED_OIDC},
+     /* Plugins */
+     {_RK_GLOBAL, "plugin.library.paths", _RK_C_STR, _RK(plugin_paths),
+      "List of plugin libraries to load (; separated). "
+@@ -2268,7 +2389,6 @@ static int rd_kafka_anyconf_set(int scope,
          char estmp[1];
          const struct rd_kafka_property *prop;
          rd_kafka_conf_res_t res;
@@ -10,3 +191,74 @@ index 9200af4c..342f3a7c 100644
          if (!errstr) {
                  errstr      = estmp;
                  errstr_size = 0;
+@@ -3798,26 +3918,50 @@ const char *rd_kafka_conf_finalize(rd_kafka_type_t cltype,
+                                "`sasl.oauthbearer.method=oidc` are "
+                                "mutually exclusive";
+ 
+-                if (conf->sasl.oauthbearer.method ==
+-                    RD_KAFKA_SASL_OAUTHBEARER_METHOD_OIDC) {
+-                        if (!conf->sasl.oauthbearer.client_id)
+-                                return "`sasl.oauthbearer.client.id` is "
+-                                       "mandatory when "
+-                                       "`sasl.oauthbearer.method=oidc` is set";
++                // Check if OAuthBearer method is OIDC
++                if (conf->sasl.oauthbearer.method == RD_KAFKA_SASL_OAUTHBEARER_METHOD_OIDC) {
++                // Check if grant_type is client_credentials
++                if (conf->sasl.oauthbearer.grant_type == RD_KAFKA_SASL_OAUTHBEARER_CLIENT_CREDENTIALS) {
++                        // Client ID is mandatory
++                        if (!conf->sasl.oauthbearer.client_id) {
++                        return "`sasl.oauthbearer.client.id` is mandatory when "
++                                "`sasl.oauthbearer.method=oidc` and `sasl.oauthbearer.grant_type=client_credentials` are set";
++                        }
+ 
++                        // Client Secret is mandatory
+                         if (!conf->sasl.oauthbearer.client_secret) {
+-                                return "`sasl.oauthbearer.client.secret` is "
+-                                       "mandatory when "
+-                                       "`sasl.oauthbearer.method=oidc` is set";
++                        return "`sasl.oauthbearer.client.secret` is mandatory when "
++                                "`sasl.oauthbearer.method=oidc` and `sasl.oauthbearer.grant_type=client_credentials` are set";
++                        }
++                }
++
++                // Check if grant_type is password
++                if (conf->sasl.oauthbearer.grant_type == RD_KAFKA_SASL_OAUTHBEARER_PASSWORD) {
++                        // Client ID is mandatory
++                        if (!conf->sasl.oauthbearer.client_id) {
++                        return "`sasl.oauthbearer.client.id` is mandatory when "
++                                "`sasl.oauthbearer.method=oidc` and `sasl.oauthbearer.grant_type=password` are set";
++                        }
++
++                        // User Name and User Password are mandatory
++                        if (!conf->sasl.oauthbearer.user_name) {
++                        return "`sasl.oauthbearer.user.name` is mandatory when "
++                                "`sasl.oauthbearer.method=oidc` and `sasl.oauthbearer.grant_type=password` are set";
+                         }
+ 
+-                        if (!conf->sasl.oauthbearer.token_endpoint_url) {
+-                                return "`sasl.oauthbearer.token.endpoint.url` "
+-                                       "is mandatory when "
+-                                       "`sasl.oauthbearer.method=oidc` is set";
++                        if (!conf->sasl.oauthbearer.user_password) {
++                        return "`sasl.oauthbearer.user.password` is mandatory when "
++                                "`sasl.oauthbearer.method=oidc` and `sasl.oauthbearer.grant_type=password` are set";
+                         }
+                 }
+ 
++                // Token Endpoint URL is mandatory in both cases
++                if (!conf->sasl.oauthbearer.token_endpoint_url) {
++                        return "`sasl.oauthbearer.token.endpoint.url` is mandatory when "
++                        "`sasl.oauthbearer.method=oidc` is set";
++                }
++                }
++
+                 /* Enable background thread for the builtin OIDC handler,
+                  * unless a refresh callback has been set. */
+                 if (conf->sasl.oauthbearer.method ==
+@@ -4452,5 +4596,5 @@ int unittest_conf(void) {
+ 
+         RD_UT_PASS();
+ }
+-
+ /**@}*/
++

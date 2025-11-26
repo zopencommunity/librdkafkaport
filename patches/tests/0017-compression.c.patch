@@ -1,0 +1,16 @@
+diff --git a/tests/0017-compression.c b/tests/0017-compression.c
+index d13bb1bf..ae3e1731 100644
+--- a/tests/0017-compression.c
++++ b/tests/0017-compression.c
+@@ -49,9 +49,11 @@ int main_0017_compression(int argc, char **argv) {
+ #if WITH_ZLIB
+                 "gzip",
+ #endif
++#ifndef __MVS__
+ #if WITH_SNAPPY
+                 "snappy",
+ #endif
++#endif
+ #if WITH_ZSTD
+                 "zstd",
+ #endif

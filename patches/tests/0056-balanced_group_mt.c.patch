@@ -1,0 +1,16 @@
+diff --git a/tests/0056-balanced_group_mt.c b/tests/0056-balanced_group_mt.c
+index 59dc8691..3a3f9e66 100644
+--- a/tests/0056-balanced_group_mt.c
++++ b/tests/0056-balanced_group_mt.c
+@@ -263,7 +263,11 @@ int main_0056_balanced_group_mt(int argc, char **argv) {
+         TIMING_START(&t_consume, "CONSUME.WAIT");
+         for (i = 0; i < MAX_THRD_CNT; ++i) {
+                 int res;
++                #ifdef __MVS__
++                if (tids[i].__ != 0)
++                #else
+                 if (tids[i] != 0)
++                #endif
+                         thrd_join(tids[i], &res);
+         }
+         TIMING_STOP(&t_consume);
