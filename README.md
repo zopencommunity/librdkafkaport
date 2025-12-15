@@ -1,4 +1,6 @@
-# Librdkafka
+[![Automatic version updates](https://github.com/ZOSOpenTools/librdkafkaport/actions/workflows/bump.yml/badge.svg)](https://github.com/ZOSOpenTools/librdkafkaport/actions/workflows/bump.yml)
+
+# librdkafka
 
 A high-performance C/C++ library for Apache Kafka
 
