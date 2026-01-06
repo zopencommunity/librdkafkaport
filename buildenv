@@ -1,5 +1,5 @@
 # bump: librdkafka-version /LIBRDKAFKA_VERSION="(.*)"/ https://github.com/confluentinc/librdkafka.git|semver:^2
-LIBRDKAFKA_VERSION="2.5.0"
+LIBRDKAFKA_VERSION="2.13.0"
 export ZOPEN_BUILD_LINE="DEV"
 export ZOPEN_DEV_URL="https://github.com/confluentinc/librdkafka.git"
 export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4 getopt libbsd"
