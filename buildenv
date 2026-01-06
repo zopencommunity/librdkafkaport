@@ -1,4 +1,4 @@
-# bump: librdkafka-version /librdkafka_VERSION="(.*)"/ https://github.com/confluentinc/librdkafka.git|semver:^2
+# bump: librdkafka-version /LIBRDKAFKA_VERSION="(.*)"/ https://github.com/confluentinc/librdkafka.git|semver:^2
 LIBRDKAFKA_VERSION="2.5.0"
 export ZOPEN_BUILD_LINE="DEV"
 export ZOPEN_DEV_URL="https://github.com/confluentinc/librdkafka.git"
@@ -6,7 +6,7 @@ export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib
 export ZOPEN_CATEGORIES="library"
 export ZOPEN_DEV_BRANCH="v2.5.0"
 export ZOPEN_TYPE="GIT"
-OS_TARGET="zosv2r4"
+OS_TARGET="zosv2r5"
 
 export ZOPEN_RUNTIME_DEPS="bash"
 export ZOPEN_COMP="clang"
