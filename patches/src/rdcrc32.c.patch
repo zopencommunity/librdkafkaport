@@ -1,5 +1,5 @@
 diff --git a/src/rdcrc32.c b/src/rdcrc32.c
-index f7a68855..a9b99cf6 100644
+index f7a6885..a9b99cf 100644
 --- a/src/rdcrc32.c
 +++ b/src/rdcrc32.c
 @@ -49,7 +49,7 @@

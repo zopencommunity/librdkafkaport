@@ -4,7 +4,7 @@ export ZOPEN_BUILD_LINE="DEV"
 export ZOPEN_DEV_URL="https://github.com/confluentinc/librdkafka.git"
 export ZOPEN_DEV_DEPS="git curl make pkgconfig openssl sed grep coreutils zoslib zlib zstd lz4 getopt libbsd"
 export ZOPEN_CATEGORIES="library"
-export ZOPEN_DEV_BRANCH="v2.5.0"
+#export ZOPEN_DEV_BRANCH="v2.5.0"
 export ZOPEN_TYPE="GIT"
 OS_TARGET="zosv2r5"
 

@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka.h b/src/rdkafka.h
-index e403b895..2ed8d60a 100644
+index 42a1733..b1db2ea 100644
 --- a/src/rdkafka.h
 +++ b/src/rdkafka.h
 @@ -89,7 +89,11 @@ typedef SSIZE_T ssize_t;

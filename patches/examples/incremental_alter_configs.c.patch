@@ -1,5 +1,5 @@
 diff --git a/examples/incremental_alter_configs.c b/examples/incremental_alter_configs.c
-index 40a16cf8..da3be453 100644
+index b63b414..3f95eb9 100644
 --- a/examples/incremental_alter_configs.c
 +++ b/examples/incremental_alter_configs.c
 @@ -38,6 +38,8 @@

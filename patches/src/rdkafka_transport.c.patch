@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_transport.c b/src/rdkafka_transport.c
-index f133d8fd..8a9f7d23 100644
+index b7c691d..c48b255 100644
 --- a/src/rdkafka_transport.c
 +++ b/src/rdkafka_transport.c
 @@ -43,11 +43,15 @@
@@ -63,9 +63,9 @@ index f133d8fd..8a9f7d23 100644
                  if (r == -1 && rd_socket_errno == EAGAIN)
 +#endif
                          return 0;
-                 else if (r == 0 || (r == -1 && rd_socket_errno == ECONNRESET)) {
+                 else if (r == 0) {
                          /* Receive 0 after POLLIN event means
-@@ -318,10 +336,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
+@@ -325,10 +343,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
  #endif
                               len,
                           0);
@@ -77,7 +77,7 @@ index f133d8fd..8a9f7d23 100644
                              || rd_socket_errno == WSAEWOULDBLOCK
  #endif
                          )
-@@ -375,8 +392,14 @@ static ssize_t rd_kafka_transport_socket_recv(rd_kafka_transport_t *rktrans,
+@@ -384,8 +401,14 @@ static ssize_t rd_kafka_transport_socket_recv(rd_kafka_transport_t *rktrans,
  void rd_kafka_transport_connect_done(rd_kafka_transport_t *rktrans,
                                       char *errstr) {
          rd_kafka_broker_t *rkb = rktrans->rktrans_rkb;
@@ -92,7 +92,7 @@ index f133d8fd..8a9f7d23 100644
  
          rd_kafka_broker_connect_done(rkb, errstr);
  }
-@@ -390,7 +413,13 @@ ssize_t rd_kafka_transport_send(rd_kafka_transport_t *rktrans,
+@@ -399,7 +422,13 @@ ssize_t rd_kafka_transport_send(rd_kafka_transport_t *rktrans,
          ssize_t r;
  #if WITH_SSL
          if (rktrans->rktrans_ssl) {
@@ -106,7 +106,7 @@ index f133d8fd..8a9f7d23 100644
                  r = rd_kafka_transport_ssl_send(rktrans, slice, errstr,
                                                  errstr_size);
          } else
-@@ -410,7 +439,13 @@ ssize_t rd_kafka_transport_recv(rd_kafka_transport_t *rktrans,
+@@ -419,7 +448,13 @@ ssize_t rd_kafka_transport_recv(rd_kafka_transport_t *rktrans,
  
  #if WITH_SSL
          if (rktrans->rktrans_ssl) {
@@ -120,7 +120,7 @@ index f133d8fd..8a9f7d23 100644
                  r = rd_kafka_transport_ssl_recv(rktrans, rbuf, errstr,
                                                  errstr_size);
          } else
-@@ -1003,8 +1038,13 @@ int rd_kafka_transport_io_serve(rd_kafka_transport_t *rktrans,
+@@ -976,8 +1011,13 @@ int rd_kafka_transport_io_serve(rd_kafka_transport_t *rktrans,
                                  int timeout_ms) {
          rd_kafka_broker_t *rkb = rktrans->rktrans_rkb;
          int events;

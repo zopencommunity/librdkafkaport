@@ -1,5 +1,5 @@
 diff --git a/src/rdaddr.c b/src/rdaddr.c
-index 6fb2c66c..6b2306b0 100644
+index 6fb2c66..6b2306b 100644
 --- a/src/rdaddr.c
 +++ b/src/rdaddr.c
 @@ -32,19 +32,38 @@

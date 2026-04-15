@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_broker.c b/src/rdkafka_broker.c
-index 685cf5bf..3c97f3e6 100644
+index fb577a9..04b3def 100644
 --- a/src/rdkafka_broker.c
 +++ b/src/rdkafka_broker.c
 @@ -38,7 +38,7 @@
@@ -19,7 +19,7 @@ index 685cf5bf..3c97f3e6 100644
  #include "rd.h"
  #include "rdaddr.h"
  #include "rdkafka_int.h"
-@@ -5508,11 +5509,25 @@ int32_t rd_kafka_broker_id(rd_kafka_broker_t *rkb) {
+@@ -5626,11 +5627,25 @@ int32_t rd_kafka_broker_id(rd_kafka_broker_t *rkb) {
   * Locality: any thread
   */
  const char *rd_kafka_broker_name(rd_kafka_broker_t *rkb) {

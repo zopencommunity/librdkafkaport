@@ -1,5 +1,5 @@
 diff --git a/configure.self b/configure.self
-index 3c49956b..f1ad5e04 100644
+index 13a2c28..2a25aba 100644
 --- a/configure.self
 +++ b/configure.self
 @@ -48,13 +48,14 @@ mkl_toggle_option "Feature" ENABLE_SYSLOG "--enable-syslog" "Enable logging to s

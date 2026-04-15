@@ -1,5 +1,5 @@
 diff --git a/examples/user_scram.c b/examples/user_scram.c
-index 95d6809b..9441d04e 100644
+index 8b81737..74cdcca 100644
 --- a/examples/user_scram.c
 +++ b/examples/user_scram.c
 @@ -40,6 +40,8 @@

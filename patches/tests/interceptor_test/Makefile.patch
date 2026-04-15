@@ -1,5 +1,5 @@
 diff --git a/tests/interceptor_test/Makefile b/tests/interceptor_test/Makefile
-index 125e3603..a34eb057 100644
+index 125e360..a34eb05 100644
 --- a/tests/interceptor_test/Makefile
 +++ b/tests/interceptor_test/Makefile
 @@ -1,7 +1,7 @@

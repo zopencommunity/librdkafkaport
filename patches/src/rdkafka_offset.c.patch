@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_offset.c b/src/rdkafka_offset.c
-index 3da38117..dde82e4c 100644
+index cf21d60..4a41567 100644
 --- a/src/rdkafka_offset.c
 +++ b/src/rdkafka_offset.c
 @@ -71,13 +71,30 @@

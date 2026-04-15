@@ -1,8 +1,8 @@
 diff --git a/src/rdkafka_partition.c b/src/rdkafka_partition.c
-index 49e6f76e..b479b6c1 100644
+index ce4f01b..f857e61 100644
 --- a/src/rdkafka_partition.c
 +++ b/src/rdkafka_partition.c
-@@ -4558,14 +4558,29 @@ void rd_kafka_partition_leader_destroy_free(void *ptr) {
+@@ -4725,14 +4725,29 @@ void rd_kafka_partition_leader_destroy_free(void *ptr) {
  
  
  const char *rd_kafka_fetch_pos2str(const rd_kafka_fetch_pos_t fetchpos) {

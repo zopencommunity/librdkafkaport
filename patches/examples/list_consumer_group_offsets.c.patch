@@ -1,5 +1,5 @@
 diff --git a/examples/list_consumer_group_offsets.c b/examples/list_consumer_group_offsets.c
-index 03e878ee..8dd1bb92 100644
+index 03e878e..8dd1bb9 100644
 --- a/examples/list_consumer_group_offsets.c
 +++ b/examples/list_consumer_group_offsets.c
 @@ -38,6 +38,8 @@

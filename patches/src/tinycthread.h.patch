@@ -1,5 +1,5 @@
 diff --git a/src/tinycthread.h b/src/tinycthread.h
-index 6bc39fe0..d3771a4f 100644
+index 6bc39fe..d3771a4 100644
 --- a/src/tinycthread.h
 +++ b/src/tinycthread.h
 @@ -482,9 +482,9 @@ int tss_set(tss_t key, void *val);

@@ -1,8 +1,8 @@
 diff --git a/src/rd.h b/src/rd.h
-index fd6c307f..b0df9ffe 100644
+index 8c215fc..5cbfca3 100644
 --- a/src/rd.h
 +++ b/src/rd.h
-@@ -130,18 +130,35 @@
+@@ -137,18 +137,35 @@
   * will fail anyway, so no need to handle it handsomely.
   */
  static RD_INLINE RD_UNUSED void *rd_calloc(size_t num, size_t sz) {

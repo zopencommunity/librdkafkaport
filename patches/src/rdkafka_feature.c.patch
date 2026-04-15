@@ -1,8 +1,8 @@
 diff --git a/src/rdkafka_feature.c b/src/rdkafka_feature.c
-index b32cdf68..c8d22d69 100644
+index a381d3c..fc1df0b 100644
 --- a/src/rdkafka_feature.c
 +++ b/src/rdkafka_feature.c
-@@ -433,11 +433,23 @@ void rd_kafka_ApiVersions_copy(const struct rd_kafka_ApiVersion *src,
+@@ -457,11 +457,23 @@ void rd_kafka_ApiVersions_copy(const struct rd_kafka_ApiVersion *src,
   * @returns a human-readable feature flag string.
   */
  const char *rd_kafka_features2str(int features) {
@@ -28,7 +28,7 @@ index b32cdf68..c8d22d69 100644
          reti = (reti + 1) % 4;
  
          *ret[reti] = '\0';
-@@ -445,12 +457,19 @@ const char *rd_kafka_features2str(int features) {
+@@ -469,12 +481,19 @@ const char *rd_kafka_features2str(int features) {
                  int r;
                  if (!(features & (1 << i)))
                          continue;

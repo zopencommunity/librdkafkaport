@@ -1,19 +1,18 @@
 diff --git a/src/rdkafka_ssl.c b/src/rdkafka_ssl.c
-index 0dd7e509..fddf85ef 100644
+index 35c1fac..83cd781 100644
 --- a/src/rdkafka_ssl.c
 +++ b/src/rdkafka_ssl.c
-@@ -36,7 +36,9 @@
+@@ -36,6 +36,9 @@
  #include "rdkafka_int.h"
  #include "rdkafka_transport_int.h"
  #include "rdkafka_cert.h"
--
 +#ifdef __MVS__
 +#include <zos-tls.h>
 +#endif
+ #include "rdunittest.h"
+ 
  #ifdef _WIN32
- #include <wincrypt.h>
- #pragma comment(lib, "crypt32.lib")
-@@ -105,10 +107,20 @@ rd_kafka_transport_ssl_clear_error(rd_kafka_transport_t *rktrans) {
+@@ -106,10 +109,20 @@ rd_kafka_transport_ssl_clear_error(rd_kafka_transport_t *rktrans) {
   *          if no error.
   */
  const char *rd_kafka_ssl_last_error_str(void) {
@@ -34,7 +33,7 @@ index 0dd7e509..fddf85ef 100644
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000
          l = ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
-@@ -119,8 +131,11 @@ const char *rd_kafka_ssl_last_error_str(void) {
+@@ -120,8 +133,11 @@ const char *rd_kafka_ssl_last_error_str(void) {
  
          if (!l)
                  return "";
@@ -47,12 +46,3 @@ index 0dd7e509..fddf85ef 100644
                      ERR_lib_error_string(l), func, file, line,
                      ((flags & ERR_TXT_STRING) && data && *data)
                          ? data
-@@ -1773,6 +1788,8 @@ static RD_UNUSED unsigned long rd_kafka_transport_ssl_threadid_cb(void) {
-          * and thread id, which means we can't use the
-          * thrd_current() API that returns the handle. */
-         return (unsigned long)GetCurrentThreadId();
-+#elif __MVS__
-+        return (unsigned long)(intptr_t)thrd_current().__;
- #else
-         return (unsigned long)(intptr_t)thrd_current();
- #endif
