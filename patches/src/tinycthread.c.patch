@@ -1,5 +1,5 @@
 diff --git a/src/tinycthread.c b/src/tinycthread.c
-index b0ec8e95..2edefa54 100644
+index b0ec8e9..2edefa5 100644
 --- a/src/tinycthread.c
 +++ b/src/tinycthread.c
 @@ -54,8 +54,14 @@ freely, subject to the following restrictions:

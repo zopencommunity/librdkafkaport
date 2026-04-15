@@ -1,5 +1,5 @@
 diff --git a/src/rdcrc32.h b/src/rdcrc32.h
-index 676cd7d2..082a81c7 100644
+index 676cd7d..082a81c 100644
 --- a/src/rdcrc32.h
 +++ b/src/rdcrc32.h
 @@ -76,7 +76,7 @@ extern "C" {

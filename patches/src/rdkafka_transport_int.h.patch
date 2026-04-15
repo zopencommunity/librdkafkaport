@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_transport_int.h b/src/rdkafka_transport_int.h
-index 9e00f238..4c35095a 100644
+index 9e00f23..4c35095 100644
 --- a/src/rdkafka_transport_int.h
 +++ b/src/rdkafka_transport_int.h
 @@ -95,6 +95,10 @@ struct rd_kafka_transport_s {

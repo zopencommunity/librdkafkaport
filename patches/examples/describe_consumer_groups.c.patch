@@ -1,8 +1,8 @@
 diff --git a/examples/describe_consumer_groups.c b/examples/describe_consumer_groups.c
-index 45b6b8d0..102a89fe 100644
+index e667eac..152011d 100644
 --- a/examples/describe_consumer_groups.c
 +++ b/examples/describe_consumer_groups.c
-@@ -38,6 +38,8 @@
+@@ -39,6 +39,8 @@
  
  #ifdef _WIN32
  #include "../win32/wingetopt.h"

@@ -1,5 +1,5 @@
 diff --git a/src/rdhdrhistogram.c b/src/rdhdrhistogram.c
-index 08240ac7..621e2311 100644
+index 08240ac..621e231 100644
 --- a/src/rdhdrhistogram.c
 +++ b/src/rdhdrhistogram.c
 @@ -104,12 +104,18 @@ rd_hdr_histogram_t *rd_hdr_histogram_new(int64_t minValue,

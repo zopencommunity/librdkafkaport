@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_int.h b/src/rdkafka_int.h
-index 46acf948..7e5d3d1d 100644
+index d9986b3..dcaef06 100644
 --- a/src/rdkafka_int.h
 +++ b/src/rdkafka_int.h
 @@ -52,6 +52,10 @@ typedef int mode_t;
@@ -13,7 +13,7 @@ index 46acf948..7e5d3d1d 100644
  #if WITH_SSL
  #include <openssl/ssl.h>
  #endif
-@@ -926,10 +930,20 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
+@@ -1063,10 +1067,20 @@ void rd_kafka_log0(const rd_kafka_conf_t *conf,
  
  
  
@@ -34,7 +34,7 @@ index 46acf948..7e5d3d1d 100644
          if (errnox) {
                  /* MSVC:
                   * This is the correct way to set errno on Windows,
-@@ -940,7 +954,11 @@ rd_kafka_set_last_error(rd_kafka_resp_err_t err, int errnox) {
+@@ -1077,7 +1091,11 @@ rd_kafka_set_last_error(rd_kafka_resp_err_t err, int errnox) {
                   * when using librdkafka as a dynamically loaded DLL. */
                  rd_set_errno(errnox);
          }
@@ -46,7 +46,7 @@ index 46acf948..7e5d3d1d 100644
          return err;
  }
  
-@@ -975,7 +993,13 @@ rd_kafka_fatal_error_code(rd_kafka_t *rk) {
+@@ -1118,7 +1136,13 @@ rd_kafka_fatal_error_code(rd_kafka_t *rk) {
  
  
  extern rd_atomic32_t rd_kafka_thread_cnt_curr;

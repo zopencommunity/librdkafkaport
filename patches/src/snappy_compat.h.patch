@@ -1,5 +1,5 @@
 diff --git a/src/snappy_compat.h b/src/snappy_compat.h
-index 3286f63d..bc4f9d62 100644
+index 3286f63..bc4f9d6 100644
 --- a/src/snappy_compat.h
 +++ b/src/snappy_compat.h
 @@ -48,6 +48,8 @@

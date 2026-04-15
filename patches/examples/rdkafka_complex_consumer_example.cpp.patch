@@ -1,5 +1,5 @@
 diff --git a/examples/rdkafka_complex_consumer_example.cpp b/examples/rdkafka_complex_consumer_example.cpp
-index dc193df8..a67744e3 100644
+index dc193df..a67744e 100644
 --- a/examples/rdkafka_complex_consumer_example.cpp
 +++ b/examples/rdkafka_complex_consumer_example.cpp
 @@ -47,7 +47,7 @@

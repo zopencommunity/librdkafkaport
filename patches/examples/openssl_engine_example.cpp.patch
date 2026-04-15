@@ -1,5 +1,5 @@
 diff --git a/examples/openssl_engine_example.cpp b/examples/openssl_engine_example.cpp
-index 72797471..91c5d6a3 100644
+index 07de034..5eb68f9 100644
 --- a/examples/openssl_engine_example.cpp
 +++ b/examples/openssl_engine_example.cpp
 @@ -42,6 +42,8 @@

@@ -1,8 +1,8 @@
 diff --git a/src/rdkafka_request.c b/src/rdkafka_request.c
-index 5ac7e0f1..08f67b7a 100644
+index d381016..094e607 100644
 --- a/src/rdkafka_request.c
 +++ b/src/rdkafka_request.c
-@@ -62,9 +62,20 @@ static const char *rd_kafka_actions_descs[] = {
+@@ -63,9 +63,20 @@ static const char *rd_kafka_actions_descs[] = {
  };
  
  const char *rd_kafka_actions2str(int actions) {

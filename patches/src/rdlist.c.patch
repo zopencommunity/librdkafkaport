@@ -1,5 +1,5 @@
 diff --git a/src/rdlist.c b/src/rdlist.c
-index 65e3eb97..8315aca8 100644
+index 65e3eb9..8315aca 100644
 --- a/src/rdlist.c
 +++ b/src/rdlist.c
 @@ -29,7 +29,9 @@

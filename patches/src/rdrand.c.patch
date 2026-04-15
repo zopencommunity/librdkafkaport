@@ -1,38 +1,30 @@
 diff --git a/src/rdrand.c b/src/rdrand.c
-index bdab0029..1d5d5dd8 100644
+index 4f6139e..7ec2615 100644
 --- a/src/rdrand.c
 +++ b/src/rdrand.c
-@@ -30,18 +30,33 @@
- #include "rdrand.h"
+@@ -31,6 +31,9 @@
  #include "rdtime.h"
  #include "tinycthread.h"
+ #include "rdmurmur2.h"
 +#ifdef __MVS__
 +#include <zos-tls.h>
 +#endif
  
- int rd_jitter(int low, int high) {
+ #ifdef HAVE_OSSL_SECURE_RAND_BYTES
+ #include <openssl/rand.h>
+@@ -63,7 +66,15 @@ unsigned int rd_seed() {
+ static int rd_rand() {
          int rand_num;
  #if HAVE_RAND_R
 +#ifdef __MVS__
-+	static tls_t tls_seed;
-+	unsigned int *seed_p = NULL;
-+	tls_seed.sz = sizeof(unsigned int);
-+	seed_p = (unsigned int *)__tlsValue(&tls_seed);
++        static tls_t tls_seed;
++        unsigned int *seed_p = NULL;
++        tls_seed.sz = sizeof(unsigned int);
++        seed_p = (unsigned int *)__tlsValue(&tls_seed);
 +#define seed (*seed_p)
 +#else
          static RD_TLS unsigned int seed = 0;
 +#endif
- 
-         /* Initial seed with time+thread id */
          if (unlikely(seed == 0)) {
-                 struct timeval tv;
-                 rd_gettimeofday(&tv, NULL);
-                 seed = (unsigned int)(tv.tv_usec / 1000);
-+#ifdef __MVS__
-+                seed ^= (unsigned int)(intptr_t)(thrd_current().__);
-+#else
-                 seed ^= (unsigned int)(intptr_t)thrd_current();
-+#endif
+                 seed = rd_seed();
          }
- 
-         rand_num = rand_r(&seed);

@@ -1,5 +1,5 @@
 diff --git a/examples/list_consumer_groups.c b/examples/list_consumer_groups.c
-index 13656cd6..80a53b2f 100644
+index 060554a..950b606 100644
 --- a/examples/list_consumer_groups.c
 +++ b/examples/list_consumer_groups.c
 @@ -38,6 +38,8 @@

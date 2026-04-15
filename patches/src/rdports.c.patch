@@ -1,5 +1,5 @@
 diff --git a/src/rdports.c b/src/rdports.c
-index 9af8ede5..6634ac76 100644
+index 9af8ede..6634ac7 100644
 --- a/src/rdports.c
 +++ b/src/rdports.c
 @@ -41,8 +41,16 @@

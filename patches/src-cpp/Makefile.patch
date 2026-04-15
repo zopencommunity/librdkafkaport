@@ -1,5 +1,5 @@
 diff --git a/src-cpp/Makefile b/src-cpp/Makefile
-index 78ecb31f..dd267d40 100644
+index 78ecb31..dd267d4 100644
 --- a/src-cpp/Makefile
 +++ b/src-cpp/Makefile
 @@ -37,7 +37,7 @@ endif

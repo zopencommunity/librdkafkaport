@@ -1,5 +1,5 @@
 diff --git a/src/rdposix.h b/src/rdposix.h
-index 0af59481..29b0c214 100644
+index 0af5948..29b0c21 100644
 --- a/src/rdposix.h
 +++ b/src/rdposix.h
 @@ -60,12 +60,15 @@

@@ -1,5 +1,5 @@
 diff --git a/examples/rdkafka_example.cpp b/examples/rdkafka_example.cpp
-index e4c832b0..89e96779 100644
+index e4c832b..89e9677 100644
 --- a/examples/rdkafka_example.cpp
 +++ b/examples/rdkafka_example.cpp
 @@ -43,6 +43,8 @@

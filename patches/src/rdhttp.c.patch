@@ -1,8 +1,8 @@
 diff --git a/src/rdhttp.c b/src/rdhttp.c
-index cea2d1c9..17d88e99 100644
+index d30ef2a..73963b8 100644
 --- a/src/rdhttp.c
 +++ b/src/rdhttp.c
-@@ -43,6 +43,36 @@
+@@ -47,6 +47,36 @@
  /** Maximum response size, increase as necessary. */
  #define RD_HTTP_RESPONSE_SIZE_MAX 1024 * 1024 * 500 /* 500kb */
  
@@ -39,7 +39,7 @@ index cea2d1c9..17d88e99 100644
  
  void rd_http_error_destroy(rd_http_error_t *herr) {
          rd_free(herr);
-@@ -320,6 +350,30 @@ rd_http_error_t *rd_http_post_expect_json(rd_kafka_t *rk,
+@@ -552,6 +582,30 @@ rd_http_error_t *rd_http_post_expect_json(rd_kafka_t *rk,
                           post_fields_size);
          curl_easy_setopt(hreq.hreq_curl, CURLOPT_POSTFIELDS, post_fields);
  
@@ -70,8 +70,8 @@ index cea2d1c9..17d88e99 100644
          for (i = 0; i <= retries; i++) {
                  if (rd_kafka_terminating(rk)) {
                          rd_http_req_destroy(&hreq);
-@@ -509,3 +563,4 @@ int unittest_http(void) {
+@@ -828,3 +882,4 @@ int unittest_http(void) {
  
-         RD_UT_PASS();
+         return fails;
  }
 +
