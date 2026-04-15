@@ -1,5 +1,5 @@
 diff --git a/src/rdkafka_transport.c b/src/rdkafka_transport.c
-index b7c691d..c48b255 100644
+index b7c691d..c22d7f2 100644
 --- a/src/rdkafka_transport.c
 +++ b/src/rdkafka_transport.c
 @@ -43,11 +43,15 @@
@@ -53,7 +53,7 @@ index b7c691d..c48b255 100644
          rd_slice_get_iov(slice, msg.msg_iov, &iovlen, IOV_MAX,
                           /* FIXME: Measure the effects of this */
                           rktrans->rktrans_sndbuf_size);
-@@ -276,7 +290,11 @@ static ssize_t rd_kafka_transport_socket_recvmsg(rd_kafka_transport_t *rktrans,
+@@ -276,9 +290,13 @@ static ssize_t rd_kafka_transport_socket_recvmsg(rd_kafka_transport_t *rktrans,
  #endif
          r = recvmsg(rktrans->rktrans_s, &msg, MSG_DONTWAIT);
          if (unlikely(r <= 0)) {
@@ -63,8 +63,11 @@ index b7c691d..c48b255 100644
                  if (r == -1 && rd_socket_errno == EAGAIN)
 +#endif
                          return 0;
-                 else if (r == 0) {
+-                else if (r == 0) {
++                else if (r == 0 || (r == -1 && rd_socket_errno == ECONNRESET)) {
                          /* Receive 0 after POLLIN event means
+                          * connection closed. */
+                         rd_snprintf(errstr, errstr_size,
 @@ -325,10 +343,9 @@ static ssize_t rd_kafka_transport_socket_recv0(rd_kafka_transport_t *rktrans,
  #endif
                               len,
